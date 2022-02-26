@@ -65,8 +65,7 @@ class _Config:
         self.label_smoothing = .0
         self.lr_decay = 0.5
         self.batch_size = 128
-        # self.epoch_num = 100
-        self.epoch_num = 10
+        self.epoch_num = 100
         self.early_stop_count = 5
         self.weight_decay_count = 3
         self.teacher_force = 100

@@ -1,21 +1,15 @@
 *.db
+*.pt
 *.zip
+*.bin
 *.json
+
 **/__pycache__/
+**/checkpoint-*/
 
 Pretraining/all_data.txt
 Pretraining/multiwoz_data.txt
 Pretraining/multiwoz_seq_data.txt
-
-Pretraining/wandb
-
-Pretraining/all_bert
-Pretraining/multiwoz_bert
-Pretraining/multiwoz_seq_bert
-
-Pretraining/all_t5
-Pretraining/multiwoz_t5
-Pretraining/multiwoz_seq_t5
 
 MinTL/log
 MinTL/experiments_DST

@@ -1,29 +1,21 @@
 import os
 import torch
 import random
+import argparse
 from tqdm import tqdm
+from pprint import pprint
 from dataclasses import dataclass
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 from typing import Dict, List, Tuple, Union
 
 from transformers import (
-	BatchEncoding,
 	PreTrainedTokenizer,
 	T5ForConditionalGeneration,
 	T5Tokenizer,
 	Trainer,
 	TrainingArguments,
 )
-
-# DATA_PATH = 'all_data.txt'
-# SAVE_CKPT_PATH = './all_t5/'
-# DATA_PATH = 'multiwoz_data.txt'
-# SAVE_CKPT_PATH = './multiwoz_t5/'
-DATA_PATH = 'multiwoz_seq_data.txt'
-SAVE_CKPT_PATH = './multiwoz_seq_t5/'
-
-NUM_EPOCHS = 3
 
 class MethodDataset(Dataset):
 	def __init__(self, tokenizer: PreTrainedTokenizer, file_path: str, block_size: int=256):
@@ -58,7 +50,7 @@ class DataCollatorForSeq2SeqMaskLanguageModeling:
 	mlm_probability: float = 0.15
 
 	def __call__(self, examples: List[Union[torch.Tensor, Dict[str, torch.Tensor]]]) -> Dict[str, torch.Tensor]:
-		if isinstance(examples[0], (dict, BatchEncoding)):
+		if isinstance(examples[0], dict):
 			examples = [e["input_ids"] for e in examples]
 		batch = self._tensorize_batch(examples)
 		if self.mlm:
@@ -86,8 +78,10 @@ class DataCollatorForSeq2SeqMaskLanguageModeling:
 		sentineled_toks = tokens.clone()
 		prev_tok_noise = torch.nn.functional.pad(mask[:-1], [1, 0])
 
-		first_noise_toks = torch.logical_and(mask, ~prev_tok_noise)
-		subse_noise_toks = torch.logical_and(mask, prev_tok_noise)
+		# first_noise_toks = torch.logical_and(mask, ~prev_tok_noise)
+		# subse_noise_toks = torch.logical_and(mask, prev_tok_noise)
+		first_noise_toks = mask & ~prev_tok_noise
+		subse_noise_toks = mask & prev_tok_noise
 		
 		sentinels = torch.arange(start = sentinel_id, end = sentinel_id - max_sentinels, step = -1)
 		sentineled_toks[first_noise_toks] = sentinels[:first_noise_toks.sum().item()]
@@ -99,58 +93,70 @@ class DataCollatorForSeq2SeqMaskLanguageModeling:
 		span_lengths = torch.randint(low = min_span_length, high = max_span_length + 1, size = (inpts.shape[0],), device = device)
 		periods = torch.round(span_lengths / mlm_probability)
 		offsets = torch.tensor([random.randint(0, period.item()) for period in periods], device = device)
-		masks = torch.stack([(torch.arange(start = 0, end = inpts.shape[1]) + offset) % period < span for offset, period, span in zip(offsets, periods, span_lengths)])
+		masks = torch.stack([(torch.arange(start = 0, end = inpts.shape[1]) + offset) % period.long() < span for offset, period, span in zip(offsets, periods, span_lengths)])
 
 		if self.tokenizer._pad_token is not None:
 			padding_mask = inpts.eq(self.tokenizer.pad_token_id)
 			masks.masked_fill_(padding_mask, value = False)
-		num_masks = torch.floor_divide(masks.sum(axis = 1), span_lengths)
+		# num_masks = torch.floor_divide(masks.sum(axis = 1), span_lengths)
+		num_masks = torch.div(masks.sum(axis = 1), span_lengths)
 		new_inpts = []
 		lbls = []
 		for inpt, mask in zip(inpts, masks):
 			new_inpts.append(
-				self._noise_span_to_unique_sentinel(inpt, mask, 100, tokenizer.convert_tokens_to_ids(['<extra_id_0>'])[0])
+				self._noise_span_to_unique_sentinel(inpt, mask, 100, self.tokenizer.convert_tokens_to_ids(['<extra_id_0>'])[0])
 			)
 			lbls.append(
-				self._noise_span_to_unique_sentinel(inpt, ~mask, 100, tokenizer.convert_tokens_to_ids(['<extra_id_0>'])[0])
+				self._noise_span_to_unique_sentinel(inpt, ~mask, 100, self.tokenizer.convert_tokens_to_ids(['<extra_id_0>'])[0])
 			)
 
 		new_inpts = pad_sequence(new_inpts, batch_first=True, padding_value=self.tokenizer.pad_token_id)
 		lbls = pad_sequence(lbls, batch_first=True, padding_value=self.tokenizer.pad_token_id)
 		return new_inpts, lbls
 
-print(f'Data File: {DATA_PATH}, Checkpoint Path: {SAVE_CKPT_PATH}')
+def main(args):
+	print('Loading the default tokenizer')
+	tokenizer = T5Tokenizer.from_pretrained('t5-small')
+	tokenizer.add_special_tokens({'mask_token': '<mask>'})
 
-print('Loading the default tokenizer')
-tokenizer = T5Tokenizer.from_pretrained('t5-small')
-tokenizer.add_special_tokens({'mask_token': '<mask>'})
+	print('Loading data')
+	dataset = MethodDataset(tokenizer=tokenizer, file_path=args.data_path)
+	data_collator = DataCollatorForSeq2SeqMaskLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15)
 
-print('Loading data')
-dataset = MethodDataset(tokenizer=tokenizer, file_path=DATA_PATH)
-data_collator = DataCollatorForSeq2SeqMaskLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15)
+	print('Loading pretrained model')
+	model = T5ForConditionalGeneration.from_pretrained(args.load_ckpt)
 
-print('Loading pretrained model')
-model = T5ForConditionalGeneration.from_pretrained('t5-small')
+	print('Starting model training')
+	training_args = TrainingArguments(
+		output_dir=args.save_ckpt,
+		overwrite_output_dir=True,
+		num_train_epochs=args.num_epochs,
+		per_device_train_batch_size=32,
+		save_steps=10_000,
+		save_total_limit=2,
+		prediction_loss_only=True,
+	)
 
-print('Starting model training')
-training_args = TrainingArguments(
-	output_dir=SAVE_CKPT_PATH,
-	overwrite_output_dir=True,
-	num_train_epochs=NUM_EPOCHS,
-	per_device_train_batch_size=32,
-	save_steps=10_000,
-	save_total_limit=2,
-	prediction_loss_only=True,
-)
+	trainer = Trainer(
+		model=model,
+		args=training_args,
+		data_collator=data_collator,
+		train_dataset=dataset,
+	)
 
-trainer = Trainer(
-	model=model,
-	args=training_args,
-	data_collator=data_collator,
-	train_dataset=dataset,
-)
+	trainer.train()
 
-trainer.train()
+	print('Saving model')
+	trainer.save_model(args.save_ckpt)
 
-print('Saving model')
-trainer.save_model(SAVE_CKPT_PATH)
+if __name__ == "__main__":
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--data_path", dest="data_path", action="store", required=True)
+	parser.add_argument("--load_ckpt", dest="load_ckpt", action="store", required=True)
+	parser.add_argument("--save_ckpt", dest="save_ckpt", action="store", required=True)
+	parser.add_argument("--num_epochs", dest="num_epochs", action="store", default=3, type=int)
+	args = parser.parse_args()
+	pprint(args)
+
+	main(args)

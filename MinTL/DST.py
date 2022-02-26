@@ -405,10 +405,10 @@ class MultiWozReader(_ReaderBase):
 class Model(object):
     def __init__(self, args, test=False):
         if args.back_bone=="t5":  
-            self.tokenizer = T5Tokenizer.from_pretrained(args.model_path if test else args.pretrained_checkpoint)
+            self.tokenizer = T5Tokenizer.from_pretrained(args.model_path if test else args.pretrained_tokenizer)
             self.model = T5_DST.from_pretrained(args.model_path if test else args.pretrained_checkpoint)
         elif args.back_bone=="bart":
-            self.tokenizer = BartTokenizer.from_pretrained(args.model_path if test else args.pretrained_checkpoint)
+            self.tokenizer = BartTokenizer.from_pretrained(args.model_path if test else args.pretrained_tokenizer)
             self.model = BART_DST.from_pretrained(args.model_path if test else args.pretrained_checkpoint)
 
         vocab = Vocab(self.model, self.tokenizer)
@@ -458,7 +458,7 @@ class Model(object):
                     outputs = self.model(input_ids=inputs["input_ids"],
                                         attention_mask=inputs["masks"],
                                         decoder_input_ids=inputs["state_input"],
-                                        lm_labels=inputs["state_update"]
+                                        lm_labels=inputs["state_update"],
                                         )
                     dst_loss = outputs[0]
 
@@ -611,6 +611,7 @@ def main():
     parser.add_argument("--max_norm", type=float, default=1.0, help="Clipping gradient norm")
     parser.add_argument("--lr", type=float, default=6e-4, help="Learning rate")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=2, help="Accumulate gradients on several steps")
+    parser.add_argument("--pretrained_tokenizer", type=str, default="t5-small", help="Path, url or short name of the model")
     parser.add_argument("--pretrained_checkpoint", type=str, default="t5-small", help="Path, url or short name of the model")
     parser.add_argument("--model_path", type=str, default="")
     parser.add_argument("--context_window", type=int, default=5, help="how many previous turns for model input")
@@ -638,8 +639,12 @@ def main():
     else:
         parse_arg_cfg(args)
         if args.model_path=="":
+            ckpt = args.pretrained_checkpoint
+            prefix = '/lfs/local/0/paridhi/DialogueSystems/Pretraining/'
+            if ckpt.startswith(prefix):
+                ckpt = ckpt[len(prefix):]
             args.model_path = 'experiments_DST/{}_sd{}_lr{}_bs{}_sp{}_dc{}_cw{}_model_{}_noupdate{}/'.format('-'.join(cfg.exp_domains), cfg.seed, args.lr, cfg.batch_size,
-                                                                                            cfg.early_stop_count, args.lr_decay, args.context_window, args.pretrained_checkpoint, args.noupdate_dst)
+                                                                                            cfg.early_stop_count, args.lr_decay, args.context_window, ckpt, args.noupdate_dst)
         if not os.path.exists(args.model_path):
             os.makedirs(args.model_path)
         cfg.result_path = os.path.join(args.model_path, 'result.csv')
