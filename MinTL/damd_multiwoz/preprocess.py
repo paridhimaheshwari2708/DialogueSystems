@@ -1,12 +1,22 @@
-import json,  os, re, copy, zipfile
+import os
+import re
+import copy
+import json
 import spacy
-import ontology, utils
-from collections import OrderedDict
+import zipfile
 from tqdm import tqdm
-from config import global_config as cfg
+from collections import OrderedDict
+
+import utils
+import ontology
 from db_ops import MultiWozDB
+from config import global_config as cfg
 from clean_dataset import clean_slot_values, clean_text
 
+# version = '2.0'
+version = '2.1'
+
+dataset_name = f'multi-woz-{version}'
 
 def get_db_values(value_set_path):
     processed = {}
@@ -16,7 +26,7 @@ def get_db_values(value_set_path):
     with open(value_set_path, 'r') as f:
         value_set = json.loads(f.read().lower())
 
-    with open('db/ontology.json', 'r') as f:
+    with open(f'db/ontology_{version}.json', 'r') as f:
         otlg = json.loads(f.read().lower())
 
     for domain, slots in value_set.items():
@@ -41,7 +51,10 @@ def get_db_values(value_set_path):
                             bspn_word.append(x)
 
     for domain_slot, values in otlg.items():
-        domain, slot = domain_slot.split('-')
+        x = domain_slot.split('-')
+        domain, slot = x[0], ' '.join(x[1:])
+        slot = slot.replace('semi ', '')
+        # domain, slot = domain_slot.split('-')
         if domain == 'bus':
             domain = 'taxi'
         if slot == 'price range':
@@ -54,11 +67,9 @@ def get_db_values(value_set_path):
             slot = 'people'
         if slot == 'book time':
             slot = 'time'
-        if slot == 'arrive by':
+        if slot == 'arrive by' or slot == 'arriveby' or slot == 'arriveBy':
             slot = 'arrive'
-        if slot == 'leave at':
-            slot = 'leave'
-        if slot == 'leaveat':
+        if slot == 'leave at' or slot == 'leaveat' or slot == 'leaveAt':
             slot = 'leave'
         if slot not in processed[domain]:
             processed[domain][slot] = []
@@ -72,9 +83,9 @@ def get_db_values(value_set_path):
                     if x not in bspn_word:
                         bspn_word.append(x)
 
-    with open(value_set_path.replace('.json', '_processed.json'), 'w') as f:
+    with open(value_set_path.replace('.json', f'_{version}_processed.json'), 'w') as f:
         json.dump(processed, f, indent=2)
-    with open('data/multi-woz-processed/bspn_word_collection.json', 'w') as f:
+    with open(f'data/{dataset_name}-processed/bspn_word_collection.json', 'w') as f:
         json.dump(bspn_word, f, indent=2)
 
     print('DB value set processed! ')
@@ -104,13 +115,14 @@ class DataPreprocessor(object):
     def __init__(self):
         self.nlp = spacy.load('en_core_web_sm')
         self.db = MultiWozDB(cfg.dbs)
-        data_path = 'data/multi-woz/annotated_user_da_with_span_full.json'
+        data_path = f'data/{dataset_name}/annotated_user_da_with_span_full.json'
         archive = zipfile.ZipFile(data_path + '.zip', 'r')
         self.convlab_data = json.loads(archive.open(data_path.split('/')[-1], 'r').read().lower())
-        self.delex_sg_valdict_path = 'data/multi-woz-processed/delex_single_valdict.json'
-        self.delex_mt_valdict_path = 'data/multi-woz-processed/delex_multi_valdict.json'
-        self.ambiguous_val_path = 'data/multi-woz-processed/ambiguous_values.json'
-        self.delex_refs_path = 'data/multi-woz-processed/reference_no.json'
+        # self.convlab_data = json.loads(open(data_path, 'r').read().lower())
+        self.delex_sg_valdict_path = f'data/{dataset_name}-processed/delex_single_valdict.json'
+        self.delex_mt_valdict_path = f'data/{dataset_name}-processed/delex_multi_valdict.json'
+        self.ambiguous_val_path = f'data/{dataset_name}-processed/ambiguous_values.json'
+        self.delex_refs_path = f'data/{dataset_name}-processed/reference_no.json'
         self.delex_refs = json.loads(open(self.delex_refs_path, 'r').read())
         if not os.path.exists(self.delex_sg_valdict_path):
             self.delex_sg_valdict, self.delex_mt_valdict, self.ambiguous_vals = self.get_delex_valdict()
@@ -118,9 +130,7 @@ class DataPreprocessor(object):
             self.delex_sg_valdict = json.loads(open(self.delex_sg_valdict_path, 'r').read())
             self.delex_mt_valdict = json.loads(open(self.delex_mt_valdict_path, 'r').read())
             self.ambiguous_vals = json.loads(open(self.ambiguous_val_path, 'r').read())
-
         self.vocab = utils.Vocab(cfg.vocab_size)
-
 
     def delex_by_annotation(self, dial_turn):
         u = dial_turn['text'].split()
@@ -253,19 +263,11 @@ class DataPreprocessor(object):
 
         return single_token_values, multi_token_values, ambiguous_entities
 
-
     def preprocess_main(self, save_path=None, is_test=False):
-        """
-        """
         data = {}
-        count=0
         self.unique_da = {}
         ordered_sysact_dict = {}
         for fn, raw_dial in tqdm(list(self.convlab_data.items())):
-            count +=1
-            # if count == 100:
-            #     break
-
             compressed_goal = {}
             dial_domains, dial_reqs = [], []
             for dom, g in raw_dial['goal'].items():
@@ -348,7 +350,6 @@ class DataPreprocessor(object):
                             elif prev_constraint_dict[domain] != constraint_dict[domain]:
                                 turn_dom_bs.append(domain)
 
-
                     sys_act_dict = {}
                     turn_dom_da = set()
                     for act in dial_turn['dialog_act']:
@@ -426,7 +427,6 @@ class DataPreprocessor(object):
                             sys_act += ['[' + a + ']']
                             sys_act += slots
 
-
                     # get db pointers
                     matnums = self.db.get_match_num(constraint_dict)
                     match_dom = turn_domain[0] if len(turn_domain) == 1 else turn_domain[1]
@@ -438,6 +438,7 @@ class DataPreprocessor(object):
                     single_turn['match'] = str(match)
                     single_turn['constraint'] = ' '.join(constraints)
                     single_turn['cons_delex'] = ' '.join(cons_delex)
+                    single_turn['constraint_dict'] = copy.deepcopy(constraint_dict)
                     single_turn['sys_act'] = ' '.join(sys_act)
                     single_turn['turn_num'] = len(dial['log'])
                     single_turn['turn_domain'] = ' '.join(['['+d+']' for d in turn_domain])
@@ -456,22 +457,23 @@ class DataPreprocessor(object):
                                 self.vocab.add_word(t)
 
                     single_turn = {}
-
-
             data[fn] = dial
-            # pprint(dial)
-            # if count == 20:
-            #     break
+
         self.vocab.construct()
-        self.vocab.save_vocab('data/multi-woz-processed/vocab')
-        with open('data/multi-woz-analysis/dialog_acts.json', 'w') as f:
+        self.vocab.save_vocab(f'data/{dataset_name}-processed/vocab')
+        with open(f'data/{dataset_name}-analysis/dialog_acts.json', 'w') as f:
             json.dump(ordered_sysact_dict, f, indent=2)
-        with open('data/multi-woz-analysis/dialog_act_type.json', 'w') as f:
+        with open(f'data/{dataset_name}-analysis/dialog_act_type.json', 'w') as f:
             json.dump(self.unique_da, f, indent=2)
         return data
 
 
 if __name__=='__main__':
+
+    # Updating dataset version
+    cfg.version = version
+    cfg._multiwoz_damd_init()
+
     db_paths = {
             'attraction': 'db/attraction_db.json',
             'hospital': 'db/hospital_db.json',
@@ -483,11 +485,12 @@ if __name__=='__main__':
         }
     get_db_values('db/value_set.json')
     preprocess_db(db_paths)
+
     dh = DataPreprocessor()
     data = dh.preprocess_main()
-    if not os.path.exists('data/multi-woz-processed'):
-        os.mkdir('data/multi-woz-processed')
+    if not os.path.exists(f'data/{dataset_name}-processed'):
+        os.mkdir(f'data/{dataset_name}-processed')
 
-    with open('data/multi-woz-processed/data_for_damd.json', 'w') as f:
+    with open(f'data/{dataset_name}-processed/data_for_damd.json', 'w') as f:
         json.dump(data, f, indent=2)
 

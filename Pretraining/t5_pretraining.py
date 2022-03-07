@@ -98,6 +98,7 @@ class DataCollatorForSeq2SeqMaskLanguageModeling:
 		if self.tokenizer._pad_token is not None:
 			padding_mask = inpts.eq(self.tokenizer.pad_token_id)
 			masks.masked_fill_(padding_mask, value = False)
+
 		# num_masks = torch.floor_divide(masks.sum(axis = 1), span_lengths)
 		num_masks = torch.div(masks.sum(axis = 1), span_lengths)
 		new_inpts = []

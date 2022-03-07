@@ -1,22 +1,26 @@
-import os, random, argparse, time, logging, json
-import numpy as np
-from copy import deepcopy
-from collections import OrderedDict
+import os
+import time
+import json
 import torch
-from itertools import chain
-from copy import deepcopy
+import random
+import logging
+import argparse
+import numpy as np
 from tqdm import tqdm
+from copy import deepcopy
+from itertools import chain
+from collections import OrderedDict
 
 from utils import _ReaderBase
 from damd_multiwoz import ontology
 from damd_multiwoz.db_ops import MultiWozDB
-from damd_multiwoz.config import global_config as cfg
 from damd_multiwoz.eval import MultiWozEvaluator
+from damd_multiwoz.config import global_config as cfg
 from transformers import (AdamW, T5Tokenizer, T5ForConditionalGeneration, BartTokenizer, BartForConditionalGeneration, WEIGHTS_NAME,CONFIG_NAME, get_linear_schedule_with_warmup)
 
 class BartTokenizer(BartTokenizer):
     def encode(self,text,add_special_tokens=False):
-        encoded_inputs = self.encode_plus(text,add_special_tokens=False)
+        encoded_inputs = self.encode_plus(text, add_special_tokens=False)
         return encoded_inputs["input_ids"]
 
 class BART_DST(BartForConditionalGeneration):
@@ -160,7 +164,7 @@ class MultiWozReader(_ReaderBase):
         self._load_data()
 
     def _load_data(self, save_temp=False):
-        self.data = json.loads(open(cfg.data_path+cfg.data_file, 'r', encoding='utf-8').read().lower())
+        self.data = json.loads(open(cfg.data_path + cfg.data_file, 'r', encoding='utf-8').read().lower())
         self.train, self.dev, self.test = [] , [], []
         for fn, dial in self.data.items():
             if 'all' in cfg.exp_domains or self.exp_files.get(fn):
@@ -169,6 +173,7 @@ class MultiWozReader(_ReaderBase):
                 elif self.test_files.get(fn):
                     self.test.append(self._get_encoded_data(fn, dial))
                 else:
+                    # This will also include augmented data
                     self.train.append(self._get_encoded_data(fn, dial))
 
         random.shuffle(self.train)
@@ -214,7 +219,6 @@ class MultiWozReader(_ReaderBase):
                         update_dict[domain][slot] = "<None>"
             else:
                 update_dict[domain] = deepcopy(constraint_dict[domain])
-    
 
         update_bspn= self.constraint_dict_to_bspan(update_dict)
         return update_bspn
@@ -383,7 +387,6 @@ class MultiWozReader(_ReaderBase):
 
         field = ['dial_id', 'turn_num', 'user', 'bspn_gen','bspn']
 
-
         for dial_id, turns in result_dict.items():
             entry = {'dial_id': dial_id, 'turn_num': len(turns)}
             # customize for the eval, always skip the first turn, so we create a dummy
@@ -412,7 +415,7 @@ class Model(object):
             self.model = BART_DST.from_pretrained(args.model_path if test else args.pretrained_checkpoint)
 
         vocab = Vocab(self.model, self.tokenizer)
-        self.reader = MultiWozReader(vocab,args)
+        self.reader = MultiWozReader(vocab, args)
         self.evaluator = MultiWozEvaluator(self.reader) # evaluator class
         self.optim = AdamW(self.model.parameters(), lr=args.lr)
         self.args = args
@@ -452,7 +455,6 @@ class Model(object):
                     first_turn = (turn_num==0)
                     inputs = self.reader.convert_batch(turn_batch, py_prev, first_turn=first_turn, dst_start_token=self.model.config.decoder_start_token_id)
                     for k in inputs:
-                        
                         inputs[k] = inputs[k].to(self.args.device)
 
                     outputs = self.model(input_ids=inputs["input_ids"],
@@ -497,7 +499,6 @@ class Model(object):
                 early_stop_count -= 1
                 scheduler.step()
                 logging.info('epoch: %d early stop countdown %d' % (epoch+1, early_stop_count))
-
 
                 if not early_stop_count:
                     self.load_model()
@@ -607,6 +608,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode')
     parser.add_argument('--cfg', nargs='*')
+    parser.add_argument("--version", type=str, help="MultiWOZ dataset version")
+    parser.add_argument("--data_file", type=str, default='data_for_damd.json')
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device (cuda or cpu)")
     parser.add_argument("--max_norm", type=float, default=1.0, help="Clipping gradient norm")
     parser.add_argument("--lr", type=float, default=6e-4, help="Learning rate")
@@ -619,6 +622,11 @@ def main():
     parser.add_argument("--back_bone", type=str, default="t5", help="choose t5 or bart") 
     parser.add_argument("--noupdate_dst", action='store_true', help="dont use update base DST")
     args = parser.parse_args()
+
+    # Updating dataset version and data filename
+    cfg.version = args.version
+    cfg.data_file = args.data_file
+    cfg._multiwoz_damd_init()
 
     cfg.mode = args.mode
     if args.mode == 'test':
@@ -643,7 +651,7 @@ def main():
             prefix = '/lfs/local/0/paridhi/DialogueSystems/Pretraining/'
             if ckpt.startswith(prefix):
                 ckpt = ckpt[len(prefix):]
-            args.model_path = 'experiments_DST/{}_sd{}_lr{}_bs{}_sp{}_dc{}_cw{}_model_{}_noupdate{}/'.format('-'.join(cfg.exp_domains), cfg.seed, args.lr, cfg.batch_size,
+            args.model_path = 'experiments_DST/v{}_{}_sd{}_lr{}_bs{}_sp{}_dc{}_cw{}_model_{}_noupdate{}/'.format(args.version ,'-'.join(cfg.exp_domains), cfg.seed, args.lr, cfg.batch_size,
                                                                                             cfg.early_stop_count, args.lr_decay, args.context_window, ckpt, args.noupdate_dst)
         if not os.path.exists(args.model_path):
             os.makedirs(args.model_path)
@@ -667,7 +675,6 @@ def main():
     elif args.mode == 'test':
         m = Model(args,test=True)
         m.eval(data='test')
-
 
 
 if __name__ == '__main__':

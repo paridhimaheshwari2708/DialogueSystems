@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
-import ontology
 import os
+import ontology
 
 def clean_text(text):
     text = text.strip()
@@ -48,15 +48,14 @@ def clean_text(text):
     text = re.sub(r'([a-zT]+)\.([a-z])', r'\1 . \2', text)   # 'abc.xyz' -> 'abc . xyz'
     text = re.sub(r'(\w+)\.\.? ', r'\1 . ', text)   # if 'abc. ' -> 'abc . '
 
-    with open(os.path.join(os.path.dirname(__file__),'data/multi-woz/mapping.pair'), 'r') as fin:
+    # TODO: Assuming mapping.pair is same across both MultiWOZ versions
+    with open(os.path.join(os.path.dirname(__file__),'data/multi-woz-2.0/mapping.pair'), 'r') as fin:
         for line in fin.readlines():
             fromx, tox = line.replace('\n', '').split('\t')
             text = ' ' + text + ' '
             text = text.replace(' ' + fromx + ' ', ' ' + tox + ' ')[1:-1]
 
     return text
-
-
 
 
 def clean_time(utter):

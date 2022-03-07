@@ -1,11 +1,19 @@
-import os, json, copy, re, zipfile
+import os
+import re
+import json
+import copy
+import zipfile
 from collections import OrderedDict
+
 from ontology import all_domains
 
+# version = '2.0'
+version = '2.1'
 
-data_path = 'data/multi-woz/'
-save_path = 'data/multi-woz-analysis/'
-save_path_exp = 'data/multi-woz-processed/'
+data_path = f'data/multi-woz-{version}/'
+save_path = f'data/multi-woz-{version}-analysis/'
+save_path_exp = f'data/multi-woz-{version}-processed/'
+
 data_file = 'data.json'
 domains = all_domains
 
@@ -21,7 +29,7 @@ def analysis():
         req_slots[domain] = []
         info_slots[domain] = []
 
-    archive = zipfile.ZipFile(data_path+data_file+'.zip', 'r')
+    archive = zipfile.ZipFile(data_path + data_file + '.zip', 'r')
     data = archive.open(data_file, 'r').read().decode('utf-8').lower()
     ref_nos = list(set(re.findall(r'\"reference\"\: \"(\w+)\"', data)))
     data = json.loads(data)
@@ -67,7 +75,6 @@ def analysis():
                         turn_dict['metadata'][dom]['semi'] = semi
                 compressed_raw_data[fn]['log'].append(turn_dict)
 
-
             # get domain statistics
             dial_type = 'multi' if 'mul' in fn or 'MUL' in fn else 'single'
             if fn in ['pmul2756.json', 'pmul4958.json', 'pmul3599.json']:
@@ -94,7 +101,6 @@ def analysis():
                     dom_fnlist[dom_str] = [fn]
                 else:
                     dom_fnlist[dom_str].append(fn)
-            ######
 
             # get informable and requestable slots statistics
             for domain in domains:
@@ -113,23 +119,21 @@ def analysis():
                     if req_s not in req_slots[domain]:
                         req_slots[domain]+= [req_s]
 
-
-
     # result statistics
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     if not os.path.exists(save_path_exp):
         os.mkdir(save_path_exp)
-    with open(save_path+'req_slots.json', 'w') as sf:
+    with open(save_path + 'req_slots.json', 'w') as sf:
         json.dump(req_slots,sf,indent=2)
-    with open(save_path+'info_slots.json', 'w') as sf:
+    with open(save_path + 'info_slots.json', 'w') as sf:
         json.dump(info_slots,sf,indent=2)
-    with open(save_path+'all_domain_specific_info_slots.json', 'w') as sf:
+    with open(save_path + 'all_domain_specific_info_slots.json', 'w') as sf:
         json.dump(list(all_domain_specific_slots),sf,indent=2)
         print("slot num:", len(list(all_domain_specific_slots)))
-    with open(save_path+'goal_of_each_dials.json', 'w') as sf:
+    with open(save_path + 'goal_of_each_dials.json', 'w') as sf:
         json.dump(goal_of_dials, sf, indent=2)
-    with open(save_path+'compressed_data.json', 'w') as sf:
+    with open(save_path + 'compressed_data.json', 'w') as sf:
         json.dump(compressed_raw_data, sf, indent=2)
     with open(save_path + 'domain_count.json', 'w') as sf:
         single_count = [d for d in dom_count.items() if 'single' in d[0]]
@@ -141,7 +145,6 @@ def analysis():
         json.dump(ref_nos,sf,indent=2)
     with open(save_path_exp + 'domain_files.json', 'w') as sf:
         json.dump(dom_fnlist, sf, indent=2)
-
 
 if __name__ == '__main__':
     analysis()

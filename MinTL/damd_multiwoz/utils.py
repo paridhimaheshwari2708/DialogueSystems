@@ -1,12 +1,12 @@
-import logging
 import json
+import logging
 import numpy as np
 from collections import OrderedDict
+
 import ontology
 
 def py2np(list):
     return np.array(list)
-
 
 def write_dict(fn, dic):
     with open(fn, 'w') as f:
@@ -87,7 +87,6 @@ class Vocab(object):
         write_dict(vocab_path+'.word2idx.json', self._word2idx)
         write_dict(vocab_path+'.freq.json', _freq_dict)
 
-
     def encode(self, word, include_oov=True):
         if include_oov:
             if self._word2idx.get(word, None) is None:
@@ -105,7 +104,6 @@ class Vocab(object):
 
     def sentence_oov_map(self, index_list):
         return [self.oov_idx_map(_) for _ in index_list]
-
 
     def decode(self, idx, indicate_oov=False):
         if not self._idx2word.get(idx):
@@ -125,7 +123,6 @@ class Vocab(object):
 
     def nl_decode(self, l, eos=None):
         return [self.sentence_decode(_, eos) + '\n' for _ in l]
-
 
 
 def padSeqs(sequences, maxlen=None, truncated = False, pad_method='post',

@@ -2,15 +2,20 @@ import logging, time, os
 
 class _Config:
     def __init__(self):
-        self._multiwoz_damd_init()
+        self.version = None
+        self.data_file = None
+        # self.version = '2.0'
+        # self.data_file = 'data_for_damd.json'
+        # self._multiwoz_damd_init()
 
     def _multiwoz_damd_init(self):
-        self.vocab_path_train = os.path.join(os.path.dirname(__file__), 'data/multi-woz-processed/vocab')
+        self.dataset_name = f'multi-woz-{self.version}'
+
+        self.vocab_path_train = os.path.join(os.path.dirname(__file__), f'data/{self.dataset_name}-processed/vocab')
         self.vocab_path_eval = None
-        self.data_path = os.path.join(os.path.dirname(__file__),'data/multi-woz-processed/')
-        self.data_file = 'data_for_damd.json'
-        self.dev_list = os.path.join(os.path.dirname(__file__),'data/multi-woz/valListFile.json')
-        self.test_list = os.path.join(os.path.dirname(__file__),'data/multi-woz/testListFile.json')
+        self.data_path = os.path.join(os.path.dirname(__file__), f'data/{self.dataset_name}-processed/')
+        self.dev_list = os.path.join(os.path.dirname(__file__), f'data/{self.dataset_name}/valListFile.json')
+        self.test_list = os.path.join(os.path.dirname(__file__), f'data/{self.dataset_name}/testListFile.json')
         self.dbs = {
             'attraction': os.path.join(os.path.dirname(__file__),'db/attraction_db_processed.json'),
             'hospital': os.path.join(os.path.dirname(__file__),'db/hospital_db_processed.json'),
@@ -21,9 +26,9 @@ class _Config:
             'train': os.path.join(os.path.dirname(__file__),'db/train_db_processed.json'),
         }
         self.glove_path = os.path.join(os.path.dirname(__file__),'data/glove/glove.6B.50d.txt')
-        self.domain_file_path = os.path.join(os.path.dirname(__file__),'data/multi-woz-processed/domain_files.json')
-        self.slot_value_set_path = os.path.join(os.path.dirname(__file__),'db/value_set_processed.json')
-        self.multi_acts_path = os.path.join(os.path.dirname(__file__),'data/multi-woz-processed/multi_act_mapping_train.json')
+        self.domain_file_path = os.path.join(os.path.dirname(__file__), f'data/{self.dataset_name}-processed/domain_files.json')
+        self.slot_value_set_path = os.path.join(os.path.dirname(__file__), f'db/value_set_{self.version}_processed.json')
+        self.multi_acts_path = os.path.join(os.path.dirname(__file__), f'data/{self.dataset_name}-processed/multi_act_mapping_train.json')
         self.exp_path = 'to be generated'
         self.log_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 
@@ -124,4 +129,3 @@ class _Config:
         logger.setLevel(logging.INFO)
 
 global_config = _Config()
-
