@@ -11,7 +11,6 @@ from utils import *
 
 MINTL_DIR = '/lfs/local/0/paridhi/DialogueSystems/MinTL/damd_multiwoz'
 
-
 def load_data(version):
 	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd.json', 'r') as f:
 		data = json.load(f, object_pairs_hook=OrderedDict)
@@ -72,6 +71,39 @@ def augment_data_translate(version):
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
 	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_translate.json', 'w') as f:
+		json.dump(data, f)
+
+
+def augment_data_crop_rotate(version, operation):
+	LENGTH_CONSTRAINT = 0.6
+
+	data, dev_files, test_files, _ = load_data(version)
+
+	train_count_final = train_count = 0
+	augmentation = Crop_Rrotate()
+	for fn in tqdm(list(data.keys())):
+		dial = data[fn]
+		if (not dev_files.get(fn)) and (not test_files.get(fn)):
+			dial_aug = deepcopy(dial)
+			flag = False
+			for turn in dial_aug['log']:
+				orig_sent_len = len(turn['user'].split())
+				translated_sent_list = augmentation.get_augmentation(turn['user'], operation)
+				if len(translated_sent_list) != 0:
+					translated_sent = translated_sent_list[0]
+					translated_sent_len = len(translated_sent.split())
+					if translated_sent_len > (LENGTH_CONSTRAINT * orig_sent_len):
+						turn['user'] = translated_sent    
+						flag = True
+			train_count += 1
+			if flag == True:
+				data[fn + '_augment'] = dial_aug
+				train_count_final += 1
+
+	print(f'# training data: {train_count}')
+	print(f'# training data after augmentation: {train_count + train_count_final}')
+
+	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}.json', 'w') as f:
 		json.dump(data, f)
 
 
@@ -147,7 +179,7 @@ def augment_data_entity_replacement(version):
 
 			# Iterating over dialogs and replacing
 			dial_aug = deepcopy(dial)
-			resp_issues = False
+			flag = False
 			for turn in dial_aug['log']:
 
 				domain = turn['turn_domain'].replace('[', '').replace(']', '')
@@ -181,7 +213,7 @@ def augment_data_entity_replacement(version):
 				for v_orig, v_new in v2v_dict.items():
 					changes.extend([ (v_orig, v_new, m.start(), m.end()) for m in re.finditer(v_orig, turn['resp_nodelex'])])
 				if check_overlap(changes):
-					resp_issues = True
+					flag = True
 					count3 += 1
 					break
 				changes = sorted(changes, key = lambda x: x[3], reverse=True)
@@ -197,7 +229,7 @@ def augment_data_entity_replacement(version):
 						constraints.extend(values_replaced[domain][slot].split())
 				turn['constraint'] = ' '.join(constraints)
 
-			if not resp_issues:
+			if not flag:
 				train_count_final += 1
 				data[fn + '_augment'] = dial_aug
 
@@ -249,6 +281,10 @@ if __name__=='__main__':
 		augment_data_paraphrase(args.version)
 	elif args.mode == 'translate':
 		augment_data_translate(args.version)
+	elif args.mode == 'rotate':
+		augment_data_crop_rotate(args.version, 'rotate')
+	elif args.mode == 'crop':
+		augment_data_crop_rotate(args.version, 'crop')
 	elif args.mode == 'entity_replacement':
 		augment_data_entity_replacement(args.version)
 	elif args.mode == 'sequential':

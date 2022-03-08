@@ -176,6 +176,7 @@ class MultiWozReader(_ReaderBase):
                     # This will also include augmented data
                     self.train.append(self._get_encoded_data(fn, dial))
 
+        print(f'Train size: {len(self.train)}, Val size: {len(self.dev)}, Test size: {len(self.test)}')
         random.shuffle(self.train)
         random.shuffle(self.dev)
         random.shuffle(self.test)
@@ -651,8 +652,9 @@ def main():
             prefix = '/lfs/local/0/paridhi/DialogueSystems/Pretraining/'
             if ckpt.startswith(prefix):
                 ckpt = ckpt[len(prefix):]
-            args.model_path = 'experiments_DST/v{}_{}_sd{}_lr{}_bs{}_sp{}_dc{}_cw{}_model_{}_noupdate{}/'.format(args.version ,'-'.join(cfg.exp_domains), cfg.seed, args.lr, cfg.batch_size,
-                                                                                            cfg.early_stop_count, args.lr_decay, args.context_window, ckpt, args.noupdate_dst)
+            dat = args.data_file.replace('.json', '')
+            args.model_path = 'experiments_DST/v{}_{}_sd{}_lr{}_bs{}_sp{}_dc{}_cw{}_data_{}_model_{}_noupdate{}/'.format(args.version ,'-'.join(cfg.exp_domains), cfg.seed, args.lr, cfg.batch_size,
+                                                                                            cfg.early_stop_count, args.lr_decay, args.context_window, dat, ckpt, args.noupdate_dst)
         if not os.path.exists(args.model_path):
             os.makedirs(args.model_path)
         cfg.result_path = os.path.join(args.model_path, 'result.csv')

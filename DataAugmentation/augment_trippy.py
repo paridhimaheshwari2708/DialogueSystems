@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import json
@@ -6,9 +7,8 @@ import argparse
 from tqdm import tqdm
 from copy import deepcopy
 from collections import OrderedDict
-import os
+
 from utils import *
-from crop_rotate import *
 
 def load_data(version):
     with open(f'../data/MULTIWOZ{version}/train_dials.json', 'r') as f:
