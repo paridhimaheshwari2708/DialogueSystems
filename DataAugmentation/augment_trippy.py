@@ -111,7 +111,7 @@ def augment_data_crop_rotate(version, operation):
 
     stats = []
 
-    augmentation = Crop_Rrotate()
+    augmentation = Crop_Rotate()
     for fn in tqdm(list(train_data.keys())):
         dial = train_data[fn]
         dial_aug = deepcopy(dial)

@@ -36,7 +36,7 @@ class Translate:
 		return output
 
 
-class Crop_Rrotate:
+class Crop_Rotate:
 	def __init__(self, maxrot=3,prob=1.0, loi = ["nsubj", "dobj", "iobj", "obj", "obl", "pobj"], 
 					pl="root", multilabs = ["case", "fixed", "flat", "cop", "compound"]  ):
 		self.nlp = spacy.load('en_core_web_sm')
@@ -81,7 +81,7 @@ class Crop_Rrotate:
 # 	sentence = 'Yes, the Jesus green outdoor pool get the most consistently positive feedback'
 # 	# sentence = 'can I help with anything else?'
 
-# 	aug = Crop_Rrotate()
+# 	aug = Crop_Rotate()
 # 	output = aug.get_augmentation(sentence, operation='rotate')
 # 	print(output)
 # 	output = aug.get_augmentation(sentence,  operation='crop')

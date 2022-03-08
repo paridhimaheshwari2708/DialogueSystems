@@ -80,7 +80,7 @@ def augment_data_crop_rotate(version, operation):
 	data, dev_files, test_files, _ = load_data(version)
 
 	train_count_final = train_count = 0
-	augmentation = Crop_Rrotate()
+	augmentation = Crop_Rotate()
 	for fn in tqdm(list(data.keys())):
 		dial = data[fn]
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
