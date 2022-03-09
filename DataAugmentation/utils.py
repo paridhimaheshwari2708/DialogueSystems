@@ -1,3 +1,4 @@
+import re
 import spacy
 import codecs
 import argparse
@@ -11,18 +12,28 @@ class Paraphrase:
 	def __init__(self):
 		self.model = PegasusForConditionalGeneration.from_pretrained('tuner007/pegasus_paraphrase')
 		self.tokenizer = PegasusTokenizerFast.from_pretrained('tuner007/pegasus_paraphrase')
+		self.model.eval()
 
 	def get_paraphrased_sentences(self, sentence, num_return_sequences=5, num_beams=5):
+		# Splitting into individual sentences
+		sentence = re.split('[.?!]', sentence)
+		sentence = [x.strip() for x in sentence]
+		sentence = [x for x in sentence if x != '']
+
 		# tokenize the text to be form of a list of token IDs
-		inputs = self.tokenizer([sentence], truncation=True, padding='longest', return_tensors='pt')
+		inputs = self.tokenizer(sentence, truncation=True, padding='longest', return_tensors='pt')
+
 		# generate the paraphrased sentences
-		outputs = self.model.generate(
+		output = self.model.generate(
 			**inputs,
 			num_beams=num_beams,
 			num_return_sequences=num_return_sequences,
 			)
+
 		# decode the generated sentences using the tokenizer to get them back to text
-		return self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+		output = self.tokenizer.batch_decode(output, skip_special_tokens=True)
+		output = ' '.join(output)
+		return output
 
 
 class Translate:
@@ -59,30 +70,38 @@ class Crop_Rotate:
 			cropper = augmenter.cropper(ud_sent, aloi=self.loi, pl=self.pl, multilabs=self.multilabs, prob= self.prob)
 			augSentRows, augSentTexts = cropper.crop()
 
-		# augSentTexts -- decreasing order sorting based on the length
-		augSentTexts = sorted(augSentTexts, key=lambda x: (-len(x), x))
-
-		# This will be None if empty/ no output found - augSentTexts
-		return augSentTexts
+		# Decreasing order sorting based on the length
+		output = sorted(augSentTexts, key=lambda x: (-len(x), x))
+		# This will be None if empty/ no output found
+		return output
 
 
 # if __name__=='__main__':
-# 	sentence = 'Learning is the process of acquiring new understanding, knowledge, behaviors, skills, values, attitudes, and preferences.'
+	# sentences = [
+	# 	"Learning is the process of acquiring new understanding, knowledge, behaviors, skills, values, attitudes, and preferences.",
+	# 	"no , i just need to make sure it is cheap . oh , and i need parking",
+	# 	"hello , i have been robbed . can you please help me get in touch with the police ?",
+	# 	"was parkside the address of the police station ? if not , can i have the address please ?",
+	# 	"yes please . i also need the travel time , departure time , and price .",
+	# 	"After being struck by lightning and being affected by particle excelerator explosion, Barry Allen wakes up with incredible speed. He calls himself the flash. Now he is desperate to find the person that killed his mother when he was a child. Barry travels back in time on multiple occasions and screws everything up several times and ruins his friends lives but he's a funny guy. He is also a superhero and has saved hundreds of people's lives so he's a good guy. The flash continually gets help from other superheroes like the arrow and Supergirl",
+	# 	"Show me the booking from SF to LA ",
+	# 	"Yes, the Jesus green outdoor pool get the most consistently positive feedback",
+	# 	"can I help with anything else?",
+	# ]
 
-# 	aug = Paraphrase()
-# 	output = aug.get_paraphrased_sentences(sentence, num_return_sequences=10, num_beams=10)
-# 	print(output)
+	# aug = Paraphrase()
+	# for sent in sentences:
+	# 	output = aug.get_paraphrased_sentences(sent, num_return_sequences=1, num_beams=10)
+	# 	print(output)
 
-# 	aug = Translate()
-# 	output = aug.get_paraphrased_sentences(sentence, num_return_sequences=10)
-# 	print(output)
+	# aug = Translate()
+	# for sent in sentences:
+	# 	output = aug.get_translated_sentences(sent)
+	# 	print(output)
 
-# 	# sentence = 'Show me the booking from SF to LA '
-# 	sentence = 'Yes, the Jesus green outdoor pool get the most consistently positive feedback'
-# 	# sentence = 'can I help with anything else?'
-
-# 	aug = Crop_Rotate()
-# 	output = aug.get_augmentation(sentence, operation='rotate')
-# 	print(output)
-# 	output = aug.get_augmentation(sentence,  operation='crop')
-# 	print(output)
+	# aug = Crop_Rotate()
+	# for sent in sentences:
+	# 	output = aug.get_augmentation(sent, operation='rotate')
+	# 	print(output)
+	# 	output = aug.get_augmentation(sent,  operation='crop')
+	# 	print(output)

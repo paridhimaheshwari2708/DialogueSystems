@@ -40,7 +40,10 @@ def augment_data_paraphrase(version):
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
 			dial_aug = deepcopy(dial)
 			for turn in dial_aug['log']:
-				turn['user'] = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=1)
+				# out = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=1)
+				out = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=5)
+				out = sorted(out, key=lambda x: len(x.split()), reverse=True)
+				turn['user'] = out[0]
 			data[fn + '_augment'] = dial_aug
 			train_count += 1
 			train_count_final += 1
@@ -48,7 +51,8 @@ def augment_data_paraphrase(version):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase.json', 'w') as f:
+	# with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase.json', 'w') as f:
+	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase_multi_long.json', 'w') as f:
 		json.dump(data, f)
 
 

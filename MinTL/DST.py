@@ -217,6 +217,8 @@ class MultiWozReader(_ReaderBase):
                 # if len(prev_constraint_dict[domain])>len(constraint_dict[domain]):
                 for slot in prev_constraint_dict[domain]:
                     if constraint_dict[domain].get(slot) is None:
+                        if domain not in update_dict:
+                            update_dict[domain] = {}
                         update_dict[domain][slot] = "<None>"
             else:
                 update_dict[domain] = deepcopy(constraint_dict[domain])
