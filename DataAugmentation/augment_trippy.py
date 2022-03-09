@@ -40,7 +40,7 @@ def augment_data_paraphrase(version):
         for turn in dial_aug['log']:
             if(turn['metadata']=={}):
                 turn['text'] = augmentation.get_paraphrased_sentences(turn['text'], num_return_sequences=1) 
-        train_data[fn + '_augment.json'] = dial_aug
+        train_data[ex_name + '_augment.json'] = dial_aug
         dialogue_dicts[ex_name + '_augment'] = dst_aug
         train_aug_count += 1
 
@@ -81,7 +81,7 @@ def augment_data_translate(version):
             if(turn['metadata']=={}): ### user utterance
                 turn['text'] = augmentation.get_translated_sentences(turn['text'])     
         
-        train_data[fn + '_augment.json'] = dial_aug
+        train_data[ex_name + '_augment.json'] = dial_aug
         dialogue_dicts[ex_name + '_augment'] = dst_aug
         train_aug_count += 1
 
@@ -133,7 +133,7 @@ def augment_data_crop_rotate(version, operation):
                         turn['text'] = translated_sent    
                         flag = True
         if(flag == True):
-            train_data[fn + '_augment.json'] = dial_aug
+            train_data[ex_name + '_augment.json'] = dial_aug
             dialogue_dicts[ex_name + '_augment'] = dst_aug
             train_aug_count += 1
 
