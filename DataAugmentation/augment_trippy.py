@@ -124,9 +124,8 @@ def augment_data_crop_rotate(version, operation):
             if(turn['metadata']=={}):
                 orig_sent = turn['text']
                 orig_sent_len = len(orig_sent.split())
-                translated_sent_list = augmentation.get_augmentation(orig_sent, operation)
-                if(len(translated_sent_list) != 0):
-                    translated_sent = translated_sent_list[0]
+                translated_sent = augmentation.get_augmentation(orig_sent, operation)
+                if(translated_sent !=  orig_sent):
                     translated_sent_len = len(translated_sent.split())
                     stats.append((orig_sent_len, translated_sent_len))
                     if(translated_sent_len > (LENGTH_CONSTRAINT*orig_sent_len)):
