@@ -1,11 +1,13 @@
 import re
+import nltk
 import spacy
 import codecs
 import argparse
 import googletrans
+from transformers import PegasusForConditionalGeneration, PegasusTokenizerFast
+
 from SP import augmenter
 from IO import conllud_sent
-from transformers import PegasusForConditionalGeneration, PegasusTokenizerFast
 
 
 class Paraphrase:
@@ -49,8 +51,8 @@ class Translate:
 
 
 class Crop_Rotate:
-	def __init__(self, maxrot=3,prob=1.0, loi = ["nsubj", "dobj", "iobj", "obj", "obl", "pobj"], 
-					pl="root", multilabs = ["case", "fixed", "flat", "cop", "compound"]  ):
+	def __init__(self, maxrot=3,prob=1.0, loi = ['nsubj', 'dobj', 'iobj', 'obj', 'obl', 'pobj'], 
+					pl='root', multilabs = ['case', 'fixed', 'flat', 'cop', 'compound']  ):
 		self.nlp = spacy.load('en_core_web_sm')
 		self.maxrot = maxrot
 		self.prob = prob 
@@ -63,16 +65,16 @@ class Crop_Rotate:
 		# Splitting into individual sentences
 		sentence_list = nltk.sent_tokenize(sentence)
 
-		output = ""
+		output = ''
 		for sent_item in sentence_list:
 			sent = self.nlp(sent_item)
 			
-			if operation=="rotate":
+			if operation == 'rotate':
 				ud_sent = conllud_sent.conllUDFromSent(sent).sent
 				rotator = augmenter.rotator(ud_sent, aloi=self.loi, pl=self.pl, multilabs=self.multilabs, prob=self.prob)
 				augSentRows, augSentTexts = rotator.rotate(maxshuffle=self.maxrot)
 					
-			elif operation=="crop":
+			elif operation == 'crop':
 				ud_sent = conllud_sent.conllUDFromSent(sent).sent
 				cropper = augmenter.cropper(ud_sent, aloi=self.loi, pl=self.pl, multilabs=self.multilabs, prob= self.prob)
 				augSentRows, augSentTexts = cropper.crop()
@@ -81,11 +83,10 @@ class Crop_Rotate:
 			augSentTexts = sorted(augSentTexts, key=lambda x: (-len(x), x))
 
 			# None if empty / no output found
-			if(len(augSentTexts) != 0):
+			if len(augSentTexts) != 0:
 				op_sent = augSentTexts[0]
 			else:
 				op_sent = sent_item # If null, take the original sentence as output
-			
 			output += op_sent
 
 		# Final output sentence (match the initial sentence where the function is called)

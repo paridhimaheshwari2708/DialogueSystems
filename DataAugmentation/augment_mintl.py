@@ -3,6 +3,7 @@ import sys
 import json
 import random
 import argparse
+import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from collections import OrderedDict
@@ -36,8 +37,8 @@ def augment_data_paraphrase(version, multi):
 	train_count_final = train_count = 0
 	augmentation = Paraphrase()
 	for fn in tqdm(list(data.keys())):
-		dial = data[fn]
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
+			dial = data[fn]
 			dial_aug = deepcopy(dial)
 			for turn in dial_aug['log']:
 				if multi:
@@ -67,8 +68,8 @@ def augment_data_translate(version):
 	train_count_final = train_count = 0
 	augmentation = Translate()
 	for fn in tqdm(list(data.keys())):
-		dial = data[fn]
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
+			dial = data[fn]
 			dial_aug = deepcopy(dial)
 			for turn in dial_aug['log']:
 				turn['user'] = augmentation.get_translated_sentences(turn['user'])
@@ -92,18 +93,18 @@ def augment_data_crop_rotate(version, operation):
 	train_count_final = train_count = 0
 	augmentation = Crop_Rotate()
 	for fn in tqdm(list(data.keys())):
-		dial = data[fn]
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
+			dial = data[fn]
 			dial_aug = deepcopy(dial)
 			flag = False
 			for turn in dial_aug['log']:
-				orig_sent_len = len(turn['user'].split())
-				translated_sent_list = augmentation.get_augmentation(turn['user'], operation)
-				if len(translated_sent_list) != 0:
-					translated_sent = translated_sent_list[0]
+				orig_sent = turn['user']
+				orig_sent_len = len(orig_sent.split())
+				translated_sent = augmentation.get_augmentation(orig_sent, operation)
+				if translated_sent !=  orig_sent:
 					translated_sent_len = len(translated_sent.split())
 					if translated_sent_len > (LENGTH_CONSTRAINT * orig_sent_len):
-						turn['user'] = translated_sent    
+						turn['user'] = translated_sent
 						flag = True
 			train_count += 1
 			if flag == True:
@@ -113,7 +114,7 @@ def augment_data_crop_rotate(version, operation):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}.json'
+	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}_multi.json'
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
@@ -131,8 +132,8 @@ def augment_data_entity_replacement(version):
 
 	count1 = count2 = count3 = train_count_final = train_count = 0
 	for fn in tqdm(list(data.keys())):
-		dial = data[fn]
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
+			dial = data[fn]
 			train_count += 1
 
 			all_turn_domains = set([turn['turn_domain'].replace('[', '').replace(']', '') for turn in dial['log']])
@@ -261,8 +262,8 @@ def augment_data_sequential(version, num_sequence=3):
 	train_count_final = train_count = 0
 	augmentation = Paraphrase()
 	for fn in tqdm(list(data.keys())):
-		dial = data[fn]
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
+			dial = data[fn]
 			num_turns = len(dial['log'])
 			dial_aug = {'log' : []}
 			for i in range(num_turns - num_sequence + 1):
@@ -282,6 +283,40 @@ def augment_data_sequential(version, num_sequence=3):
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
+def divide_data_quartiles(mode, version):
+	data, dev_files, test_files, _ = load_data(version)
+
+	load_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{mode}.json'
+	with open(load_file, 'r') as f:
+		data_aug = json.load(f)
+
+	not_train_files = list(dev_files.keys()) + list(test_files.keys())
+	train_files = list(set(data.keys()).difference(not_train_files))
+	train_aug_files = [x for x in data_aug.keys() if x.endswith('_augment')]
+
+	# Dividing into quartiles
+	random.shuffle(train_aug_files)
+	q1, q2, q3, q4 = np.array_split(train_aug_files, 4)
+	data_aug_quarter = deepcopy(data)
+
+	# Adding 25 % of augmented data
+	for fn in tqdm(q1):
+		data_aug_quarter[fn] = data_aug[fn]
+	with open(load_file.replace('.json', '_25.json'), 'w') as f:
+		json.dump(data_aug_quarter, f)
+
+	# Adding 50 % of augmented data
+	for fn in tqdm(q2):
+		data_aug_quarter[fn] = data_aug[fn]
+	with open(load_file.replace('.json', '_50.json'), 'w') as f:
+		json.dump(data_aug_quarter, f)
+
+	# Adding 75 % of augmented data
+	for fn in tqdm(q3):
+		data_aug_quarter[fn] = data_aug[fn]
+	with open(load_file.replace('.json', '_75.json'), 'w') as f:
+		json.dump(data_aug_quarter, f)
+
 
 if __name__=='__main__':
 
@@ -290,17 +325,19 @@ if __name__=='__main__':
 	parser.add_argument("--version", type=str, help="MultiWOZ dataset version")
 	args = parser.parse_args()
 
-	if args.mode == 'paraphrase':
-		augment_data_paraphrase(args.version, multi=False)
-	if args.mode == 'paraphrase_multi':
-		augment_data_paraphrase(args.version, multi=True)
-	elif args.mode == 'translate':
-		augment_data_translate(args.version)
-	elif args.mode == 'rotate':
-		augment_data_crop_rotate(args.version, 'rotate')
-	elif args.mode == 'crop':
-		augment_data_crop_rotate(args.version, 'crop')
-	elif args.mode == 'entity_replacement':
-		augment_data_entity_replacement(args.version)
-	elif args.mode == 'sequential':
-		augment_data_sequential(args.version)
+	# if args.mode == 'paraphrase':
+	# 	augment_data_paraphrase(args.version, multi=False)
+	# if args.mode == 'paraphrase_multi':
+	# 	augment_data_paraphrase(args.version, multi=True)
+	# elif args.mode == 'translate':
+	# 	augment_data_translate(args.version)
+	# elif args.mode == 'rotate':
+	# 	augment_data_crop_rotate(args.version, 'rotate')
+	# elif args.mode == 'crop':
+	# 	augment_data_crop_rotate(args.version, 'crop')
+	# elif args.mode == 'entity_replacement':
+	# 	augment_data_entity_replacement(args.version)
+	# elif args.mode == 'sequential':
+	# 	augment_data_sequential(args.version)
+
+	divide_data_quartiles(args.mode, args.version)
