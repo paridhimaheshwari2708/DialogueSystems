@@ -30,7 +30,7 @@ def load_data(version):
 	return data, dev_files, test_files, value_set
 
 
-def augment_data_paraphrase(version):
+def augment_data_paraphrase(version, multi):
 	data, dev_files, test_files, _ = load_data(version)
 
 	train_count_final = train_count = 0
@@ -40,9 +40,11 @@ def augment_data_paraphrase(version):
 		if (not dev_files.get(fn)) and (not test_files.get(fn)):
 			dial_aug = deepcopy(dial)
 			for turn in dial_aug['log']:
-				# out = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=1)
-				out = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=5)
-				out = sorted(out, key=lambda x: len(x.split()), reverse=True)
+				if multi:
+					out = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=5)
+					out = sorted(out, key=lambda x: len(x.split()), reverse=True)
+				else:
+					out = augmentation.get_paraphrased_sentences(turn['user'], num_return_sequences=1)
 				turn['user'] = out[0]
 			data[fn + '_augment'] = dial_aug
 			train_count += 1
@@ -51,8 +53,11 @@ def augment_data_paraphrase(version):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	# with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase.json', 'w') as f:
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase_multi_long.json', 'w') as f:
+	if multi:
+		save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase_multi.json'
+	else:
+		save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase.json'
+	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
 
@@ -74,7 +79,8 @@ def augment_data_translate(version):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_translate.json', 'w') as f:
+	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_translate.json'
+	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
 
@@ -107,7 +113,8 @@ def augment_data_crop_rotate(version, operation):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}.json', 'w') as f:
+	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}.json'
+	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
 
@@ -243,7 +250,8 @@ def augment_data_entity_replacement(version):
 					\n\tUser delexical and reconstructed mismatch: {count2}\
 					\n\tResponse overlap fail: {count3}')
 
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_entity_replacement.json', 'w') as f:
+	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_entity_replacement.json'
+	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
 
@@ -270,7 +278,8 @@ def augment_data_sequential(version, num_sequence=3):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_sequential.json', 'w') as f:
+	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_sequential.json'
+	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
 
@@ -282,7 +291,9 @@ if __name__=='__main__':
 	args = parser.parse_args()
 
 	if args.mode == 'paraphrase':
-		augment_data_paraphrase(args.version)
+		augment_data_paraphrase(args.version, multi=False)
+	if args.mode == 'paraphrase_multi':
+		augment_data_paraphrase(args.version, multi=True)
 	elif args.mode == 'translate':
 		augment_data_translate(args.version)
 	elif args.mode == 'rotate':
