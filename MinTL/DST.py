@@ -388,7 +388,7 @@ class MultiWozReader(_ReaderBase):
         results = []
         eos_syntax = ontology.eos_tokens if not eos_syntax else eos_syntax
 
-        field = ['dial_id', 'turn_num', 'user', 'bspn_gen','bspn']
+        field = ['dial_id', 'turn_num', 'user', 'resp_nodelex', 'bspn_gen', 'bspn']
 
         for dial_id, turns in result_dict.items():
             entry = {'dial_id': dial_id, 'turn_num': len(turns)}
@@ -405,6 +405,8 @@ class MultiWozReader(_ReaderBase):
                     if key == 'turn_domain':
                         v = ' '.join(v)
                     entry[key] = decode_fn(v, eos=eos_syntax[key]) if key in eos_syntax and v != '' else v
+                    if key == 'resp_nodelex':
+                        entry[key] = decode_fn(v)
                 results.append(entry)
         return results, field
 
@@ -455,7 +457,7 @@ class Model(object):
             for iter_num, dial_batch in enumerate(data_iterator):
                 py_prev = {'pv_bspn': None}
                 for turn_num, turn_batch in enumerate(dial_batch):
-                    first_turn = (turn_num==0)
+                    first_turn = (turn_num == 0)
                     inputs = self.reader.convert_batch(turn_batch, py_prev, first_turn=first_turn, dst_start_token=self.model.config.decoder_start_token_id)
                     for k in inputs:
                         inputs[k] = inputs[k].to(self.args.device)
@@ -476,8 +478,8 @@ class Model(object):
                     if step % self.args.gradient_accumulation_steps == 0:
                         self.optim.step()
                         self.optim.zero_grad()
-                    step+=1
-                    log_dst +=float(dst_loss.item())
+                    step += 1
+                    log_dst += float(dst_loss.item())
                     log_cnt += 1
 
                 if (iter_num+1)%cfg.report_interval==0:
@@ -560,18 +562,19 @@ class Model(object):
                 inputs = self.reader.convert_batch(turn_batch, py_prev, first_turn=first_turn, dst_start_token=self.model.config.decoder_start_token_id)
                 for k in inputs:
                     inputs[k] = inputs[k].to(self.args.device)
-                dst_outputs = self.model.inference(tokenizer=self.tokenizer, reader=self.reader, prev=py_prev, input_ids=inputs['input_ids'],attention_mask=inputs["masks"])
+                dst_outputs = self.model.inference(tokenizer=self.tokenizer, reader=self.reader, prev=py_prev, input_ids=inputs['input_ids'], attention_mask=inputs["masks"])
                 turn_batch['bspn_gen'] = dst_outputs
                 py_prev['bspn'] = dst_outputs
-
+            # tokenizer.decode('resp_nodelex')
             result_collection.update(self.reader.inverse_transpose_batch(dial_batch))
 
         results, field = self.reader.wrap_result(result_collection)
         jg, slot_f1, slot_acc, slot_cnt, slot_corr  = self.evaluator.dialog_state_tracking_eval(results, bspn_mode='bspn')
+        import pdb; pdb.set_trace()
         logging.info('test DST join goal: %2.1f  slot_f1: %2.1f  slot_acc: %2.1f'%(jg, slot_f1, slot_acc))
         self.args.model_path
-        with open(os.path.join(self.args.model_path, 'result.txt'), 'w') as f:
-            f.write('test DST join goal: %2.1f  slot_f1: %2.1f  slot_acc: %2.1f'%(jg, slot_f1, slot_acc))
+        # with open(os.path.join(self.args.model_path, 'result.txt'), 'w') as f:
+        #     f.write('test DST join goal: %2.1f  slot_f1: %2.1f  slot_acc: %2.1f'%(jg, slot_f1, slot_acc))
         # self.reader.metric_record(metric_results)
         self.model.train()
         return None

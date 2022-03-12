@@ -4,11 +4,14 @@ import spacy
 import codecs
 import argparse
 import googletrans
+import matplotlib.style
+import matplotlib.pyplot as plt
 from transformers import PegasusForConditionalGeneration, PegasusTokenizerFast
 
 from SP import augmenter
 from IO import conllud_sent
 
+plt.style.use('seaborn-darkgrid')
 
 class Paraphrase:
 	def __init__(self):
@@ -93,32 +96,42 @@ class Crop_Rotate:
 		return output
 
 
-# if __name__=='__main__':
-# 	sentences = [
-# 		"Learning is the process of acquiring new understanding, knowledge, behaviors, skills, values, attitudes, and preferences.",
-# 		"no , i just need to make sure it is cheap . oh , and i need parking",
-# 		"hello , i have been robbed . can you please help me get in touch with the police ?",
-# 		"was parkside the address of the police station ? if not , can i have the address please ?",
-# 		"yes please . i also need the travel time , departure time , and price .",
-# 		"After being struck by lightning and being affected by particle excelerator explosion, Barry Allen wakes up with incredible speed. He calls himself the flash. Now he is desperate to find the person that killed his mother when he was a child. Barry travels back in time on multiple occasions and screws everything up several times and ruins his friends lives but he's a funny guy. He is also a superhero and has saved hundreds of people's lives so he's a good guy. The flash continually gets help from other superheroes like the arrow and Supergirl",
-# 		"Show me the booking from SF to LA ",
-# 		"Yes, the Jesus green outdoor pool get the most consistently positive feedback",
-# 		"can I help with anything else?",
-# 	]
+def plot_quartile_results(results, points, filename):
+	plt.figure()
+	for k, v in results.items():
+		plt.plot(points, v, label=k)
+	plt.legend()
+	plt.savefig(filename)
 
-# 	aug = Paraphrase()
-# 	for sent in sentences:
-# 		output = aug.get_paraphrased_sentences(sent, num_return_sequences=2, num_beams=10)
-# 		print(output)
 
-# 	aug = Translate()
-# 	for sent in sentences:
-# 		output = aug.get_translated_sentences(sent)
-# 		print(output)
+if __name__=='__main__':
+	sentences = [
+		"Learning is the process of acquiring new understanding, knowledge, behaviors, skills, values, attitudes, and preferences.",
+		"no , i just need to make sure it is cheap . oh , and i need parking",
+		"hello , i have been robbed . can you please help me get in touch with the police ?",
+		"was parkside the address of the police station ? if not , can i have the address please ?",
+		"yes please . i also need the travel time , departure time , and price .",
+		"After being struck by lightning and being affected by particle excelerator explosion, Barry Allen wakes up with incredible speed. He calls himself the flash. Now he is desperate to find the person that killed his mother when he was a child. Barry travels back in time on multiple occasions and screws everything up several times and ruins his friends lives but he's a funny guy. He is also a superhero and has saved hundreds of people's lives so he's a good guy. The flash continually gets help from other superheroes like the arrow and Supergirl",
+		"Show me the booking from SF to LA ",
+		"Yes, the Jesus green outdoor pool get the most consistently positive feedback",
+		"can I help with anything else?",
+	]
 
-# 	aug = Crop_Rotate()
-# 	for sent in sentences:
-# 		output = aug.get_augmentation(sent, operation='rotate')
-# 		print(output)
-# 		output = aug.get_augmentation(sent,  operation='crop')
-# 		print(output)
+	sentences = ["Can you find an Indian restaurant for me that is also in the town centre?"]
+
+	# aug = Paraphrase()
+	# for sent in sentences:
+	# 	output = aug.get_paraphrased_sentences(sent, num_return_sequences=10, num_beams=10)
+	# 	print(output)
+
+	aug = Translate()
+	for sent in sentences:
+		output = aug.get_translated_sentences(sent)
+		print(output)
+
+	# aug = Crop_Rotate()
+	# for sent in sentences:
+	# 	output = aug.get_augmentation(sent, operation='rotate')
+	# 	print(output)
+	# 	output = aug.get_augmentation(sent,  operation='crop')
+	# 	print(output)

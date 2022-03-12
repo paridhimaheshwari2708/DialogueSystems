@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import json
@@ -10,14 +11,20 @@ from collections import OrderedDict
 
 from utils import *
 
-MINTL_DIR = '/lfs/local/0/paridhi/DialogueSystems/MinTL/damd_multiwoz'
+DATA_DIR = '/lfs/local/0/paridhi/DialogueSystems/MinTL/damd_multiwoz'
+LOGS_DIR = '/lfs/local/0/paridhi/DialogueSystems/MinTL/experiments_DST'
+
+ALL_AUGMENTATIONS = ['paraphrase_multi', 'translate', 'rotate', 'crop', 'entity_replacement', 'sequential']
+ALL_AUGMENTATIONS = ['paraphrase_multi', 'crop']
+
+ENTITY_REPLACEMENT_PROBABILITY = 0.5
 
 def load_data(version):
-	with open(f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd.json', 'r') as f:
+	with open(f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd.json', 'r') as f:
 		data = json.load(f, object_pairs_hook=OrderedDict)
 
-	test_list = [l.strip().lower() for l in open(f'{MINTL_DIR}/data/multi-woz-{version}/testListFile.json', 'r').readlines()]
-	dev_list = [l.strip().lower() for l in open(f'{MINTL_DIR}/data/multi-woz-{version}/valListFile.json', 'r').readlines()]
+	test_list = [l.strip().lower() for l in open(f'{DATA_DIR}/data/multi-woz-{version}/testListFile.json', 'r').readlines()]
+	dev_list = [l.strip().lower() for l in open(f'{DATA_DIR}/data/multi-woz-{version}/valListFile.json', 'r').readlines()]
 
 	dev_files, test_files = {}, {}
 	for fn in test_list:
@@ -25,7 +32,9 @@ def load_data(version):
 	for fn in dev_list:
 		dev_files[fn.replace('.json', '')] = 1
 
-	with open(f'{MINTL_DIR}/db/value_set_{version}_processed.json', 'r') as f:
+	# with open(f'{DATA_DIR}/db/value_set_{version}_processed.json', 'r') as f:
+	# 	value_set = json.load(f)
+	with open(f'ontology_{version}.json', 'r') as f:
 		value_set = json.load(f)
 
 	return data, dev_files, test_files, value_set
@@ -55,9 +64,9 @@ def augment_data_paraphrase(version, multi):
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
 	if multi:
-		save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase_multi.json'
+		save_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase_multi.json'
 	else:
-		save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase.json'
+		save_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_paraphrase.json'
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
@@ -80,7 +89,7 @@ def augment_data_translate(version):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_translate.json'
+	save_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_translate.json'
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
@@ -114,7 +123,7 @@ def augment_data_crop_rotate(version, operation):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}_multi.json'
+	save_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_{operation}_multi.json'
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
@@ -186,7 +195,12 @@ def augment_data_entity_replacement(version):
 				for slot, value in slot_value.items():
 					# Ignoring integer slots to avoid confusion
 					if slot not in ['people', 'stay', 'stars']:
-						values_replaced[domain][slot] = random.choice(value_set[domain][slot])
+						if random.uniform(0, 1) > ENTITY_REPLACEMENT_PROBABILITY:
+							# picks = value_set[domain][slot]
+							# picks = value_set[f'{domain}-{slot}'] # ontology
+							# picks = [x for x in value_set[f'{domain}-{slot}'] if x != "do n't care" and x != "dontcare"] # ontology2
+							picks = [x for x in value_set[f'{domain}-{slot}'] if x != "do n't care" and x != "dontcare" and "|" not in x] # ontology3
+							values_replaced[domain][slot] = random.choice(picks)
 						v2v_dict[values_original[domain][slot]] = values_replaced[domain][slot]
 
 			# Iterating over dialogs and replacing
@@ -251,7 +265,7 @@ def augment_data_entity_replacement(version):
 					\n\tUser delexical and reconstructed mismatch: {count2}\
 					\n\tResponse overlap fail: {count3}')
 
-	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_entity_replacement.json'
+	save_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_entity_replacement_ontology4.json'
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
 
@@ -279,14 +293,15 @@ def augment_data_sequential(version, num_sequence=3):
 	print(f'# training data: {train_count}')
 	print(f'# training data after augmentation: {train_count + train_count_final}')
 
-	save_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_sequential.json'
+	save_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_sequential.json'
 	with open(save_file, 'w') as f:
 		json.dump(data, f)
+
 
 def divide_data_quartiles(mode, version):
 	data, dev_files, test_files, _ = load_data(version)
 
-	load_file = f'{MINTL_DIR}/data/multi-woz-{version}-processed/data_for_damd_{mode}.json'
+	load_file = f'{DATA_DIR}/data/multi-woz-{version}-processed/data_for_damd_{mode}.json'
 	with open(load_file, 'r') as f:
 		data_aug = json.load(f)
 
@@ -318,6 +333,35 @@ def divide_data_quartiles(mode, version):
 		json.dump(data_aug_quarter, f)
 
 
+def fetch_goal_accuracy(exp_name):
+	with open(os.path.join(LOGS_DIR, exp_name, 'result.txt'), 'r') as f:
+		content = f.readlines()
+	acc = float(content[0].split()[4])
+	return acc
+
+
+def analyse_quartile_results(version):
+	results = {}
+	for mode in ALL_AUGMENTATIONS:
+		if 'paraphrase' in mode:
+			results[mode.rstrip('_multi')] = [
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs16_sp5_dc0.8_cw3_data_data_for_damd_{mode}_25_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs16_sp5_dc0.8_cw3_data_data_for_damd_{mode}_50_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs16_sp5_dc0.8_cw3_data_data_for_damd_{mode}_75_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs16_sp5_dc0.8_cw3_data_data_for_damd_{mode}_model_t5-small_noupdateFalse'),
+			]
+		else:
+			results[mode] = [
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_data_data_for_damd_{mode}_25_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_data_data_for_damd_{mode}_50_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_data_data_for_damd_{mode}_75_model_t5-small_noupdateFalse'),
+				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_data_data_for_damd_{mode}_model_t5-small_noupdateFalse'),
+			]
+	plot_quartile_results(results, [0, 0.25, 0.50, 0.75, 1.0], 'augmentation_rate_mintl.png')
+
+
 if __name__=='__main__':
 
 	parser = argparse.ArgumentParser()
@@ -325,19 +369,21 @@ if __name__=='__main__':
 	parser.add_argument("--version", type=str, help="MultiWOZ dataset version")
 	args = parser.parse_args()
 
-	# if args.mode == 'paraphrase':
-	# 	augment_data_paraphrase(args.version, multi=False)
-	# if args.mode == 'paraphrase_multi':
-	# 	augment_data_paraphrase(args.version, multi=True)
-	# elif args.mode == 'translate':
-	# 	augment_data_translate(args.version)
-	# elif args.mode == 'rotate':
-	# 	augment_data_crop_rotate(args.version, 'rotate')
-	# elif args.mode == 'crop':
-	# 	augment_data_crop_rotate(args.version, 'crop')
-	# elif args.mode == 'entity_replacement':
-	# 	augment_data_entity_replacement(args.version)
-	# elif args.mode == 'sequential':
-	# 	augment_data_sequential(args.version)
+	if args.mode == 'paraphrase':
+		augment_data_paraphrase(args.version, multi=False)
+	if args.mode == 'paraphrase_multi':
+		augment_data_paraphrase(args.version, multi=True)
+	elif args.mode == 'translate':
+		augment_data_translate(args.version)
+	elif args.mode == 'rotate':
+		augment_data_crop_rotate(args.version, 'rotate')
+	elif args.mode == 'crop':
+		augment_data_crop_rotate(args.version, 'crop')
+	elif args.mode == 'entity_replacement':
+		augment_data_entity_replacement(args.version)
+	elif args.mode == 'sequential':
+		augment_data_sequential(args.version)
 
-	divide_data_quartiles(args.mode, args.version)
+	# divide_data_quartiles(args.mode, args.version)
+
+	# analyse_quartile_results(args.version)
