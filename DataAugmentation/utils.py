@@ -99,9 +99,15 @@ class Crop_Rotate:
 def plot_quartile_results(results, points, filename):
 	plt.figure()
 	for k, v in results.items():
-		plt.plot(points, v, label=k)
-	plt.legend()
+		plt.plot(points, v, label=k.capitalize())
+	plt.legend(prop={'size': 14})
+	plt.xticks(fontsize=14)
+	plt.yticks(fontsize=14)
+	plt.xlabel('Percentage of Augmentation', fontsize=16)
+	plt.ylabel('Joint Goal Accuracy (%)', fontsize=16)
+	plt.tight_layout()
 	plt.savefig(filename)
+	plt.close()
 
 
 if __name__=='__main__':

@@ -14,8 +14,7 @@ from utils import *
 DATA_DIR = '/lfs/local/0/paridhi/DialogueSystems/MinTL/damd_multiwoz'
 LOGS_DIR = '/lfs/local/0/paridhi/DialogueSystems/MinTL/experiments_DST'
 
-ALL_AUGMENTATIONS = ['paraphrase_multi', 'translate', 'rotate', 'crop', 'entity_replacement', 'sequential']
-ALL_AUGMENTATIONS = ['paraphrase_multi', 'crop']
+ALL_AUGMENTATIONS = ['paraphrase_multi', 'crop', 'rotate']
 
 ENTITY_REPLACEMENT_PROBABILITY = 0.5
 
@@ -34,6 +33,7 @@ def load_data(version):
 
 	# with open(f'{DATA_DIR}/db/value_set_{version}_processed.json', 'r') as f:
 	# 	value_set = json.load(f)
+
 	with open(f'ontology_{version}.json', 'r') as f:
 		value_set = json.load(f)
 
@@ -195,7 +195,7 @@ def augment_data_entity_replacement(version):
 				for slot, value in slot_value.items():
 					# Ignoring integer slots to avoid confusion
 					if slot not in ['people', 'stay', 'stars']:
-						if random.uniform(0, 1) > ENTITY_REPLACEMENT_PROBABILITY:
+						if random.uniform(0, 1) > ENTITY_REPLACEMENT_PROBABILITY: #ontology4
 							# picks = value_set[domain][slot]
 							# picks = value_set[f'{domain}-{slot}'] # ontology
 							# picks = [x for x in value_set[f'{domain}-{slot}'] if x != "do n't care" and x != "dontcare"] # ontology2
@@ -359,7 +359,7 @@ def analyse_quartile_results(version):
 				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_data_data_for_damd_{mode}_75_model_t5-small_noupdateFalse'),
 				fetch_goal_accuracy(f'v{version}_all_sd557_lr0.0006_bs32_sp5_dc0.8_cw3_data_data_for_damd_{mode}_model_t5-small_noupdateFalse'),
 			]
-	plot_quartile_results(results, [0, 0.25, 0.50, 0.75, 1.0], 'augmentation_rate_mintl.png')
+	plot_quartile_results(results, [0, 25, 50, 75, 100], 'augmentation_rate_mintl.png')
 
 
 if __name__=='__main__':
@@ -369,21 +369,21 @@ if __name__=='__main__':
 	parser.add_argument("--version", type=str, help="MultiWOZ dataset version")
 	args = parser.parse_args()
 
-	if args.mode == 'paraphrase':
-		augment_data_paraphrase(args.version, multi=False)
-	if args.mode == 'paraphrase_multi':
-		augment_data_paraphrase(args.version, multi=True)
-	elif args.mode == 'translate':
-		augment_data_translate(args.version)
-	elif args.mode == 'rotate':
-		augment_data_crop_rotate(args.version, 'rotate')
-	elif args.mode == 'crop':
-		augment_data_crop_rotate(args.version, 'crop')
-	elif args.mode == 'entity_replacement':
-		augment_data_entity_replacement(args.version)
-	elif args.mode == 'sequential':
-		augment_data_sequential(args.version)
-
-	# divide_data_quartiles(args.mode, args.version)
-
-	# analyse_quartile_results(args.version)
+	if args.mode == 'plot':
+		analyse_quartile_results(args.version)
+	else:
+		if args.mode == 'paraphrase':
+			augment_data_paraphrase(args.version, multi=False)
+		if args.mode == 'paraphrase_multi':
+			augment_data_paraphrase(args.version, multi=True)
+		elif args.mode == 'translate':
+			augment_data_translate(args.version)
+		elif args.mode == 'rotate':
+			augment_data_crop_rotate(args.version, 'rotate')
+		elif args.mode == 'crop':
+			augment_data_crop_rotate(args.version, 'crop')
+		elif args.mode == 'entity_replacement':
+			augment_data_entity_replacement(args.version)
+		elif args.mode == 'sequential':
+			augment_data_sequential(args.version)
+		divide_data_quartiles(args.mode, args.version)
