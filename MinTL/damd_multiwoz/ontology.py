@@ -155,7 +155,7 @@ special_tokens = ['<pad>', '<go_r>', '<unk>', '<go_b>', '<go_a>',
 
 eos_tokens = {
     'user': '<eos_u>', 'user_delex': '<eos_u>',
-    'resp': '<eos_r>', 'resp_gen': '<eos_r>', 'pv_resp': '<eos_r>',
+    'resp': '<eos_r>', 'resp_gen': '<eos_r>', 'resp_nodelex': '<eos_r>', 'pv_resp': '<eos_r>',
     'bspn': '<eos_b>', 'bspn_gen': '<eos_b>', 'pv_bspn': '<eos_b>',
     'bsdx': '<eos_b>', 'bsdx_gen': '<eos_b>', 'pv_bsdx': '<eos_b>',
     'aspn': '<eos_a>', 'aspn_gen': '<eos_a>', 'pv_aspn': '<eos_a>',
