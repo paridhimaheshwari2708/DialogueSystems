@@ -3,6 +3,7 @@ import nltk
 import spacy
 import codecs
 import argparse
+import numpy as np
 import googletrans
 import matplotlib.style
 import matplotlib.pyplot as plt
@@ -110,30 +111,52 @@ def plot_quartile_results(results, points, filename):
 	plt.close()
 
 
-if __name__=='__main__':
-	sentences = [
-		"Learning is the process of acquiring new understanding, knowledge, behaviors, skills, values, attitudes, and preferences.",
-		"no , i just need to make sure it is cheap . oh , and i need parking",
-		"hello , i have been robbed . can you please help me get in touch with the police ?",
-		"was parkside the address of the police station ? if not , can i have the address please ?",
-		"yes please . i also need the travel time , departure time , and price .",
-		"After being struck by lightning and being affected by particle excelerator explosion, Barry Allen wakes up with incredible speed. He calls himself the flash. Now he is desperate to find the person that killed his mother when he was a child. Barry travels back in time on multiple occasions and screws everything up several times and ruins his friends lives but he's a funny guy. He is also a superhero and has saved hundreds of people's lives so he's a good guy. The flash continually gets help from other superheroes like the arrow and Supergirl",
-		"Show me the booking from SF to LA ",
-		"Yes, the Jesus green outdoor pool get the most consistently positive feedback",
-		"can I help with anything else?",
-	]
+def multi_domain_analysis():
+	y1 = [53.7, 57.1, 52.2, 45.4, 46.3]
+	y2 = [54.2, 57.7, 52.4, 45.9, 45.6]
+	y3 = [55.7, 57.6, 53.2, 46.3, 47.2]
 
-	sentences = ["Can you find an Indian restaurant for me that is also in the town centre?"]
+	ind = np.arange(len(y1))
+	width = 0.25
+
+	plt.figure()
+	max_y_lim = max(y3) + 2
+	plt.ylim(40, max_y_lim)
+	bar1 = plt.bar(ind, y1, width)
+	bar2 = plt.bar(ind+width, y2, width)
+	bar3 = plt.bar(ind+width*2, y3, width)
+	plt.xlabel('Domain', fontsize=16)
+	plt.ylabel('Joint Goal Accuracy (%)', fontsize=16)
+	plt.legend((bar1, bar2, bar3), ('Base', 'Base + Aug', 'Base + Pre-train + Aug'), prop={'size': 14})
+	plt.xticks(ind+width,['Attraction', 'Train', 'Restaurant', 'Hotel', 'Taxi'], fontsize=14)
+	plt.yticks(fontsize=14)
+	plt.tight_layout()
+	plt.savefig('domain_analysis.png')
+	plt.close()
+
+
+if __name__=='__main__':
+	# sentences = [
+	# 	"Learning is the process of acquiring new understanding, knowledge, behaviors, skills, values, attitudes, and preferences.",
+	# 	"no , i just need to make sure it is cheap . oh , and i need parking",
+	# 	"hello , i have been robbed . can you please help me get in touch with the police ?",
+	# 	"was parkside the address of the police station ? if not , can i have the address please ?",
+	# 	"yes please . i also need the travel time , departure time , and price .",
+	# 	"After being struck by lightning and being affected by particle excelerator explosion, Barry Allen wakes up with incredible speed. He calls himself the flash. Now he is desperate to find the person that killed his mother when he was a child. Barry travels back in time on multiple occasions and screws everything up several times and ruins his friends lives but he's a funny guy. He is also a superhero and has saved hundreds of people's lives so he's a good guy. The flash continually gets help from other superheroes like the arrow and Supergirl",
+	# 	"Show me the booking from SF to LA ",
+	# 	"Yes, the Jesus green outdoor pool get the most consistently positive feedback",
+	# 	"can I help with anything else?",
+	# ]
 
 	# aug = Paraphrase()
 	# for sent in sentences:
 	# 	output = aug.get_paraphrased_sentences(sent, num_return_sequences=10, num_beams=10)
 	# 	print(output)
 
-	aug = Translate()
-	for sent in sentences:
-		output = aug.get_translated_sentences(sent)
-		print(output)
+	# aug = Translate()
+	# for sent in sentences:
+	# 	output = aug.get_translated_sentences(sent)
+	# 	print(output)
 
 	# aug = Crop_Rotate()
 	# for sent in sentences:
@@ -141,3 +164,5 @@ if __name__=='__main__':
 	# 	print(output)
 	# 	output = aug.get_augmentation(sent,  operation='crop')
 	# 	print(output)
+
+	# multi_domain_analysis()
