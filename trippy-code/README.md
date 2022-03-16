@@ -7,11 +7,26 @@ A slot is filled by one of three copy mechanisms:
 3. a value may be copied over from a different slot that is already contained in the dialog state to resolve coreferences within and across domains.
 Our approach combines the advantages of span-based slot filling methods with memory methods to avoid the use of value picklists altogether. We argue that our strategy simplifies the DST task while at the same time achieving state of the art performance on various popular evaluation sets including MultiWOZ 2.1.
 
-## How to run
+## How to run experiments for this project
 
-Two example scripts are provided for how to use TripPy. `DO.example.simple` will train and evaluate a simpler model, whereas `DO.example.advanced` uses the parameters that will result in performance similar to the reported ones. `DO.example.recommended` uses RoBERTa as encoder and the currently recommended set of hyperparameters. For more challenging datasets with longer dialogues, better performance may be achieved by using the maximum sequence length of 512.
+Use the script in `DO.example.simple`. You can to edit the following variables in the script to achieve the desired experiments:
+-  `DATA_DIR` : Path to the dataset variation (including augmentations) 
+- `TASK` : Dataset config
+- `bert_model_path` :Path to the pre-trained bert model or `bert-base-uncased` for baseline
+- `OUT_DIR`: Path to store the results
 
-`DO.example.mtl` will train a model with multi-task learning (MTL) using an auxiliary task (See our paper "Out-of-Task Training for Dialog State Tracking Models" for details).
+
+## Evaluate
+
+- `metric_bert_dst.py` - Use this for Joint Goal Accuracy
+- `metric_slot_scores.py` - Use this for slot F1 and slot accuracy
+- `metric_domain.py` - Domain wise analysis on the performance
+
+Usage for all these metrics files is as follows:
+
+```
+python metric_bert_dst <path to eval_pred in the outut directory>
+```
 
 ## Datasets
 

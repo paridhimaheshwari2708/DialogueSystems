@@ -1,6 +1,6 @@
 ## Pre-training Strategies for Different Transformer Architectures
 
-###Pre-training Techniques
+### Pre-training Techniques
 
 - `./bert_pretraining.py`: Pretraining BERT models with Masked Language Modelling on custom dataset
 - `./span_bert_pretraining.py`: Pretraining BERT models with Span Prediction on custom dataset

@@ -9,7 +9,7 @@
 
 ### File structure:
 - `./augment_mintl.py`: Code for different augmentations in the required format for MinTL baseline
-- `./augment_trippy.py`: Code for different augmentations in the required format for TripPy baselike
+- `./augment_trippy.py`: Code for different augmentations in the required format for TripPy baseline
 
 Usage:
 
