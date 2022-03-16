@@ -1,0 +1,97 @@
+02/21/2022 23:30:58 - WARNING - __main__ -   Process rank: -1, device: cpu, n_gpu: 0, distributed training: False, 16-bits training: False
+02/21/2022 23:30:58 - INFO - transformers.configuration_utils -   loading configuration file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-config.json from cache at /Users/srnangi/.cache/torch/transformers/4dad0251492946e18ac39290fcfe91b89d370fee250efe9521476438fe8ca185.7156163d5fdc189c3016baca0775ffce230789d7fa2a42ef516483e4ca884517
+02/21/2022 23:30:58 - INFO - transformers.configuration_utils -   Model config BertConfig {
+  "architectures": [
+    "BertForMaskedLM"
+  ],
+  "attention_probs_dropout_prob": 0.1,
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "layer_norm_eps": 1e-12,
+  "max_position_embeddings": 512,
+  "model_type": "bert",
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "pad_token_id": 0,
+  "type_vocab_size": 2,
+  "vocab_size": 30522
+}
+
+02/21/2022 23:30:59 - INFO - transformers.tokenization_utils -   loading file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt from cache at /Users/srnangi/.cache/torch/transformers/26bc1ad6c0ac742e9b52263248f6d0f00068293b33709fae12320c0e35ccfbbb.542ce4285a40d23a559526243235df47c5f75c197f04f37d1a0c124c32c9a084
+02/21/2022 23:30:59 - INFO - transformers.modeling_utils -   loading weights file https://cdn.huggingface.co/bert-base-uncased-pytorch_model.bin from cache at /Users/srnangi/.cache/torch/transformers/f2ee78bdd635b758cc0a12352586868bef80e47401abe4c4fcc3832421e7338b.36ca03ab34a1a5d5fa7bc3d03d55c4fa650fed07220e2eeebc06ce58d0e9a157
+02/21/2022 23:31:02 - INFO - transformers.modeling_utils -   Weights of BertForDST not initialized from pretrained model: ['class_taxi-leaveAt.weight', 'class_taxi-leaveAt.bias', 'token_taxi-leaveAt.weight', 'token_taxi-leaveAt.bias', 'refer_taxi-leaveAt.weight', 'refer_taxi-leaveAt.bias', 'class_taxi-destination.weight', 'class_taxi-destination.bias', 'token_taxi-destination.weight', 'token_taxi-destination.bias', 'refer_taxi-destination.weight', 'refer_taxi-destination.bias', 'class_taxi-departure.weight', 'class_taxi-departure.bias', 'token_taxi-departure.weight', 'token_taxi-departure.bias', 'refer_taxi-departure.weight', 'refer_taxi-departure.bias', 'class_taxi-arriveBy.weight', 'class_taxi-arriveBy.bias', 'token_taxi-arriveBy.weight', 'token_taxi-arriveBy.bias', 'refer_taxi-arriveBy.weight', 'refer_taxi-arriveBy.bias', 'class_restaurant-book_people.weight', 'class_restaurant-book_people.bias', 'token_restaurant-book_people.weight', 'token_restaurant-book_people.bias', 'refer_restaurant-book_people.weight', 'refer_restaurant-book_people.bias', 'class_restaurant-book_day.weight', 'class_restaurant-book_day.bias', 'token_restaurant-book_day.weight', 'token_restaurant-book_day.bias', 'refer_restaurant-book_day.weight', 'refer_restaurant-book_day.bias', 'class_restaurant-book_time.weight', 'class_restaurant-book_time.bias', 'token_restaurant-book_time.weight', 'token_restaurant-book_time.bias', 'refer_restaurant-book_time.weight', 'refer_restaurant-book_time.bias', 'class_restaurant-food.weight', 'class_restaurant-food.bias', 'token_restaurant-food.weight', 'token_restaurant-food.bias', 'refer_restaurant-food.weight', 'refer_restaurant-food.bias', 'class_restaurant-pricerange.weight', 'class_restaurant-pricerange.bias', 'token_restaurant-pricerange.weight', 'token_restaurant-pricerange.bias', 'refer_restaurant-pricerange.weight', 'refer_restaurant-pricerange.bias', 'class_restaurant-name.weight', 'class_restaurant-name.bias', 'token_restaurant-name.weight', 'token_restaurant-name.bias', 'refer_restaurant-name.weight', 'refer_restaurant-name.bias', 'class_restaurant-area.weight', 'class_restaurant-area.bias', 'token_restaurant-area.weight', 'token_restaurant-area.bias', 'refer_restaurant-area.weight', 'refer_restaurant-area.bias', 'class_hotel-book_people.weight', 'class_hotel-book_people.bias', 'token_hotel-book_people.weight', 'token_hotel-book_people.bias', 'refer_hotel-book_people.weight', 'refer_hotel-book_people.bias', 'class_hotel-book_day.weight', 'class_hotel-book_day.bias', 'token_hotel-book_day.weight', 'token_hotel-book_day.bias', 'refer_hotel-book_day.weight', 'refer_hotel-book_day.bias', 'class_hotel-book_stay.weight', 'class_hotel-book_stay.bias', 'token_hotel-book_stay.weight', 'token_hotel-book_stay.bias', 'refer_hotel-book_stay.weight', 'refer_hotel-book_stay.bias', 'class_hotel-name.weight', 'class_hotel-name.bias', 'token_hotel-name.weight', 'token_hotel-name.bias', 'refer_hotel-name.weight', 'refer_hotel-name.bias', 'class_hotel-area.weight', 'class_hotel-area.bias', 'token_hotel-area.weight', 'token_hotel-area.bias', 'refer_hotel-area.weight', 'refer_hotel-area.bias', 'class_hotel-parking.weight', 'class_hotel-parking.bias', 'token_hotel-parking.weight', 'token_hotel-parking.bias', 'refer_hotel-parking.weight', 'refer_hotel-parking.bias', 'class_hotel-pricerange.weight', 'class_hotel-pricerange.bias', 'token_hotel-pricerange.weight', 'token_hotel-pricerange.bias', 'refer_hotel-pricerange.weight', 'refer_hotel-pricerange.bias', 'class_hotel-stars.weight', 'class_hotel-stars.bias', 'token_hotel-stars.weight', 'token_hotel-stars.bias', 'refer_hotel-stars.weight', 'refer_hotel-stars.bias', 'class_hotel-internet.weight', 'class_hotel-internet.bias', 'token_hotel-internet.weight', 'token_hotel-internet.bias', 'refer_hotel-internet.weight', 'refer_hotel-internet.bias', 'class_hotel-type.weight', 'class_hotel-type.bias', 'token_hotel-type.weight', 'token_hotel-type.bias', 'refer_hotel-type.weight', 'refer_hotel-type.bias', 'class_attraction-type.weight', 'class_attraction-type.bias', 'token_attraction-type.weight', 'token_attraction-type.bias', 'refer_attraction-type.weight', 'refer_attraction-type.bias', 'class_attraction-name.weight', 'class_attraction-name.bias', 'token_attraction-name.weight', 'token_attraction-name.bias', 'refer_attraction-name.weight', 'refer_attraction-name.bias', 'class_attraction-area.weight', 'class_attraction-area.bias', 'token_attraction-area.weight', 'token_attraction-area.bias', 'refer_attraction-area.weight', 'refer_attraction-area.bias', 'class_train-book_people.weight', 'class_train-book_people.bias', 'token_train-book_people.weight', 'token_train-book_people.bias', 'refer_train-book_people.weight', 'refer_train-book_people.bias', 'class_train-leaveAt.weight', 'class_train-leaveAt.bias', 'token_train-leaveAt.weight', 'token_train-leaveAt.bias', 'refer_train-leaveAt.weight', 'refer_train-leaveAt.bias', 'class_train-destination.weight', 'class_train-destination.bias', 'token_train-destination.weight', 'token_train-destination.bias', 'refer_train-destination.weight', 'refer_train-destination.bias', 'class_train-day.weight', 'class_train-day.bias', 'token_train-day.weight', 'token_train-day.bias', 'refer_train-day.weight', 'refer_train-day.bias', 'class_train-arriveBy.weight', 'class_train-arriveBy.bias', 'token_train-arriveBy.weight', 'token_train-arriveBy.bias', 'refer_train-arriveBy.weight', 'refer_train-arriveBy.bias', 'class_train-departure.weight', 'class_train-departure.bias', 'token_train-departure.weight', 'token_train-departure.bias', 'refer_train-departure.weight', 'refer_train-departure.bias']
+02/21/2022 23:31:02 - INFO - transformers.modeling_utils -   Weights from pretrained model not used in BertForDST: ['cls.predictions.bias', 'cls.predictions.transform.dense.weight', 'cls.predictions.transform.dense.bias', 'cls.predictions.decoder.weight', 'cls.seq_relationship.weight', 'cls.seq_relationship.bias', 'cls.predictions.transform.LayerNorm.weight', 'cls.predictions.transform.LayerNorm.bias']
+02/21/2022 23:31:02 - INFO - __main__ -   Updated model config: BertConfig {
+  "architectures": [
+    "BertForMaskedLM"
+  ],
+  "attention_probs_dropout_prob": 0.1,
+  "dst_class_aux_feats_ds": false,
+  "dst_class_aux_feats_inform": false,
+  "dst_class_labels": 7,
+  "dst_class_loss_ratio": 0.8,
+  "dst_class_types": [
+    "none",
+    "dontcare",
+    "copy_value",
+    "true",
+    "false",
+    "refer",
+    "inform"
+  ],
+  "dst_dropout_rate": 0.3,
+  "dst_heads_dropout_rate": 0.0,
+  "dst_refer_loss_for_nonpointable": false,
+  "dst_slot_list": [
+    "taxi-leaveAt",
+    "taxi-destination",
+    "taxi-departure",
+    "taxi-arriveBy",
+    "restaurant-book_people",
+    "restaurant-book_day",
+    "restaurant-book_time",
+    "restaurant-food",
+    "restaurant-pricerange",
+    "restaurant-name",
+    "restaurant-area",
+    "hotel-book_people",
+    "hotel-book_day",
+    "hotel-book_stay",
+    "hotel-name",
+    "hotel-area",
+    "hotel-parking",
+    "hotel-pricerange",
+    "hotel-stars",
+    "hotel-internet",
+    "hotel-type",
+    "attraction-type",
+    "attraction-name",
+    "attraction-area",
+    "train-book_people",
+    "train-leaveAt",
+    "train-destination",
+    "train-day",
+    "train-arriveBy",
+    "train-departure"
+  ],
+  "dst_token_loss_for_nonpointable": false,
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "layer_norm_eps": 1e-12,
+  "max_position_embeddings": 512,
+  "model_type": "bert",
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "pad_token_id": 0,
+  "type_vocab_size": 2,
+  "vocab_size": 30522
+}
+
+02/21/2022 23:31:02 - INFO - __main__ -   Training/evaluation parameters Namespace(adam_epsilon=1e-06, append_history=False, class_aux_feats_ds=False, class_aux_feats_inform=False, class_loss_ratio=0.8, config_name='', data_dir='data/MULTIWOZ2.1', dataset_config='dataset_config/multiwoz21.json', delexicalize_sys_utts=False, device=device(type='cpu'), do_eval=True, do_lower_case=True, do_train=False, dropout_rate=0.3, eval_all_checkpoints=True, evaluate_during_training=False, fp16=False, fp16_opt_level='O1', gradient_accumulation_steps=1, heads_dropout=0.0, label_value_repetitions=True, learning_rate=0.0001, local_rank=-1, logging_steps=10, max_grad_norm=1.0, max_seq_length=180, max_steps=-1, model_name_or_path='bert-base-uncased', model_type='bert', n_gpu=0, no_cuda=False, num_train_epochs=10.0, output_dir='results', overwrite_cache=False, overwrite_output_dir=False, per_gpu_eval_batch_size=1, per_gpu_train_batch_size=48, predict_type='dev', refer_loss_for_nonpointable=False, save_epochs=2, save_steps=0, seed=42, svd=0.0, swap_utterances=False, task_name='multiwoz21', token_loss_for_nonpointable=False, tokenizer_name='', use_history_labels=False, warmup_proportion=0.1, weight_decay=0.0)
+02/21/2022 23:31:02 - INFO - __main__ -   Evaluate the following checkpoints: []
