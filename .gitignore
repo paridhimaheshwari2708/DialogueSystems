@@ -3,7 +3,6 @@
 *.zip
 *.bin
 *.png
-*.json
 
 **/__pycache__/
 **/checkpoint-*/
