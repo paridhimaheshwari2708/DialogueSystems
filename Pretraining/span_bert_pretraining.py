@@ -37,7 +37,6 @@ class MethodDataset(Dataset):
     def __getitem__(self, i) -> torch.Tensor:
         return self.examples[i]
 
-# Translated from: https://github.com/google-research/text-to-text-transfer-transformer/blob/master/t5/data/preprocessors.py
 @dataclass
 class DataCollatorForSpanLanguageModeling:
     """
@@ -86,34 +85,20 @@ class DataCollatorForSpanLanguageModeling:
         if self.tokenizer._pad_token is not None:
             padding_mask = inpts.eq(self.tokenizer.pad_token_id)
             masks.masked_fill_(padding_mask, value = False)
-        # num_masks = torch.floor_divide(masks.sum(axis = 1), span_lengths)
         num_masks = torch.div(masks.sum(axis = 1), span_lengths)
-        # new_inpts = []
-        # lbls = []
-        # inputs[indices_replaced] = self.tokenizer.convert_tokens_to_ids(self.tokenizer.mask_token)
-        # for inpt, mask in zip(inpts, masks):
-        #     new_inpts.append(
-        #         self._noise_span_to_unique_sentinel(inpt, mask, 100, self.tokenizer.convert_tokens_to_ids(['mask'])[0])
-        #     )
-        #     lbls.append(
-        #         self._noise_span_to_unique_sentinel(inpt, ~mask, 100, self.tokenizer.convert_tokens_to_ids(['<extra_id_0>'])[0])
-        #     )
+
 
         labels = inputs.clone()
         inputs[masks] = self.tokenizer.convert_tokens_to_ids(self.tokenizer.mask_token)
         labels[~masks] = -100  # We only compute loss on masked tokens
 
-        # import pdb
-        # pdb.set_trace()        
-        # new_inpts = pad_sequence(new_inpts, batch_first=True, padding_value=self.tokenizer.pad_token_id)
-        # lbls = pad_sequence(lbls, batch_first=True, padding_value=self.tokenizer.pad_token_id)
+
         return inputs, labels
 
 def main(args):
     pre_trained_bert_model =  "bert-base-uncased"
     print('Loading the default tokenizer')
     tokenizer = BertTokenizer.from_pretrained(pre_trained_bert_model)
-    # tokenizer.add_special_tokens({'mask_token': '<mask>'})
 
     print('Loading data')
     dataset = MethodDataset(tokenizer=tokenizer, file_path=args.data_path, block_size=128)
