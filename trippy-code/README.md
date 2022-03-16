@@ -9,7 +9,7 @@ Our approach combines the advantages of span-based slot filling methods with mem
 
 ## How to run experiments for this project
 
-Use the script in `DO.example.simple`. You can to edit the following variables in the script to achieve the desired experiments:
+Use the script in `DO.example.advanced`. You can to edit the following variables in the script to achieve the desired experiments:
 -  `DATA_DIR` : Path to the dataset variation (including augmentations) 
 - `TASK` : Dataset config
 - `bert_model_path` :Path to the pre-trained bert model or `bert-base-uncased` for baseline
